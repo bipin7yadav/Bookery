@@ -122,11 +122,11 @@ const Footer = () => {
 						<span className="flex-row flex-align-center flex-justify-center text-sm">
 							&lt;/&gt; by
 							<a
-								href="http://bharati-21.github.io/"
+								href="https://bipinyadav.vercel.app/"
 								className="ml-0-25"
 								target="_blank"
 							>
-								Bharati Subramanian
+								Bipin Yadav
 							</a>
 						</span>
 					</p>
