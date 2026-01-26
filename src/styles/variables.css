@@ -1,0 +1,18 @@
+:root {
+	/* background colors */
+	--light-theme-bg-color: #f5f7fa;
+	--light-theme-default-color: #111111;
+
+	--overlay-text-color: rgba(0, 0, 0, 0.1);
+	--overlay-bg-color: rgba(0, 0, 0, 0.5);
+
+	--text-color: #111111;
+	--text-active-color: #111111be;
+
+	--primary-color: #ee0063;
+	--primary-active-color: #c90054;
+	--primary-bg-color: #ffbbd7;
+	--primary-overlay-text-color: #ffbbd76d;
+
+	--secondary-color: #831a19;
+}
