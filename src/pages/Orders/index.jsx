@@ -1,55 +1,56 @@
 import React from "react";
 import { Link } from "react-router-dom";
-
 import { useOrders } from "contexts";
 import { OrderItem } from "components";
-import loadingImage from "assets/images/loader.svg";
+import { LoadingSpinner, EmptyState, Button } from "components/ui";
 
 const Orders = () => {
 	const { orders, ordersLoading, ordersError } = useOrders();
 
-	return (
-		<main className="main order-summary-main my-2 mx-auto px-3 py-2">
-			{ordersLoading ? (
-				<img
-					src={loadingImage}
-					alt="Loading svg"
-					className="img img-responsive mx-auto loader-img"
-				/>
-			) : ordersError ? (
-				<h1 className="error text error-color my-2 text-center loader-error">
-					{ordersError}
-				</h1>
-			) : (
-				<>
-					<div className="text-center">
-						<h2 className="main-head mb-2">My Orders</h2>
-					</div>
+	if (ordersLoading) {
+		return (
+			<main className="main-content page-section flex min-h-[40vh] items-center justify-center">
+				<LoadingSpinner />
+			</main>
+		);
+	}
 
-					{orders?.length ? (
-						<div className="orders-list flex-col flex-justify-start flex-align-center">
-							{orders?.map((order) => (
-								<OrderItem
-									order={order}
-									key={order.orderId}
-									page={"orders"}
-								/>
-							))}
-						</div>
-					) : (
-						<div className="mx-auto text-center">
-							<h5>No orders found!</h5>
-						</div>
-					)}
-					<Link
-						to="/products"
-						className="btn btn-primary p-0-25 mt-1 mx-auto"
-					>
-						Shop {orders?.length ? "more" : "now"}
-					</Link>
-				</>
+	if (ordersError) {
+		return (
+			<main className="main-content page-section">
+				<div className="page-container">
+					<p className="py-12 text-center text-error">{ordersError}</p>
+					<Button as={Link} to="/products">Shop for books</Button>
+				</div>
+			</main>
+		);
+	}
+
+	return (
+		<div>
+			<h2 className="mb-6 text-lg font-semibold text-surface-900">My Orders</h2>
+			{orders?.length ? (
+				<div className="space-y-6">
+					{orders.map((order) => (
+						<OrderItem order={order} key={order.orderId} page="orders" />
+					))}
+				</div>
+			) : (
+				<EmptyState
+					title="No orders yet"
+					description="Your orders will appear here after you place one."
+					actionLabel="Shop now"
+					actionTo="/products"
+				/>
 			)}
-		</main>
+			{orders?.length > 0 && (
+				<div className="mt-8">
+					<Button as={Link} to="/products" variant="outline">
+						Shop more
+					</Button>
+				</div>
+			)}
+		</div>
 	);
 };
 

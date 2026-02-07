@@ -1,27 +1,21 @@
 import React from "react";
-
 import { useCart } from "contexts";
+import { Button } from "components/ui";
 
 const CouponOptions = () => {
 	const { cartDispatch } = useCart();
 
-	const handleShowViewCouponsModal = (event) => {
-		event.stopPropagation();
-		cartDispatch({
-			type: "SET_COUPON_OPTIONS_MODAL_VISIBILITY",
-			payload: { modalVisibility: true },
-		});
+	const handleOpenModal = (e) => {
+		e.stopPropagation();
+		cartDispatch({ type: "SET_COUPON_OPTIONS_MODAL_VISIBILITY", payload: { modalVisibility: true } });
 	};
 
 	return (
-		<div className="coupon-options-container py-1-5 flex-row flex-justify-between flex-align-center">
-			<h6 className="coupon-options-head">Coupons available</h6>
-			<button
-				className="btn btn-primary p-0-25"
-				onClick={handleShowViewCouponsModal}
-			>
+		<div className="mb-4 flex items-center justify-between rounded-xl border border-surface-200 bg-surface-50/50 py-3 px-4">
+			<span className="text-sm font-medium text-surface-700">Coupons available</span>
+			<Button variant="secondary" size="sm" onClick={handleOpenModal}>
 				View Coupons
-			</button>
+			</Button>
 		</div>
 	);
 };

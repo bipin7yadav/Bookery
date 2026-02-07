@@ -1,88 +1,69 @@
 import React, { useRef, useState } from "react";
-
 import { useOutsideClick } from "custom-hooks";
 import { useCart } from "contexts";
 import { getCartItemsData } from "utils";
+import { Button } from "components/ui";
 
 const CouponOptionsModal = () => {
 	const {
 		cartDispatch,
 		couponOptions,
-		cartState: { cartItems, selectedCoupon: previouslySelectedCoupon },
+		cartState: { cartItems, selectedCoupon: previous },
 	} = useCart();
-
-	const [selectedCoupon, setSelectedCoupon] = useState(
-		previouslySelectedCoupon?.id ?? ""
-	);
-
+	const [selected, setSelected] = useState(previous?.id ?? "");
 	const { cartItemsTotalPrice } = getCartItemsData(cartItems);
+	const modalRef = useRef(null);
 
-	const handleModalClose = () => {
-		cartDispatch({
-			type: "SET_COUPON_OPTIONS_MODAL_VISIBILITY",
-			payload: { modalVisibility: false },
-		});
+	useOutsideClick(modalRef, () => {
+		cartDispatch({ type: "SET_COUPON_OPTIONS_MODAL_VISIBILITY", payload: { modalVisibility: false } });
+	});
+
+	const handleApply = () => {
+		cartDispatch({ type: "SET_SELECTED_COUPON", payload: { selectedCoupon: selected } });
+		cartDispatch({ type: "SET_COUPON_OPTIONS_MODAL_VISIBILITY", payload: { modalVisibility: false } });
 	};
-
-	const handleCouponValueChange = (event) => {
-		setSelectedCoupon(Number(event.target.value));
-	};
-
-	const handleApplyCoupon = () => {
-		cartDispatch({
-			type: "SET_SELECTED_COUPON",
-			payload: { selectedCoupon },
-		});
-		cartDispatch({
-			type: "SET_COUPON_OPTIONS_MODAL_VISIBILITY",
-			payload: { modalVisibility: false },
-		});
-	};
-
-	const modalRef = useRef();
-	useOutsideClick(modalRef, handleModalClose);
 
 	return (
 		<div
-			className="coupon-options-modal flex-col flex-align-start p-1"
 			ref={modalRef}
+			className="my-auto w-full max-w-md rounded-2xl border border-surface-200 bg-white p-4 shadow-large sm:p-6 mx-3"
 		>
-			<div className="coupon-options-header flex-row flex-align-center flex-justify-between">
-				<h5>Available Coupons</h5>
+			<div className="mb-4 flex items-center justify-between">
+				<h3 className="text-lg font-semibold text-surface-900">Available Coupons</h3>
 				<button
-					className="btn btn-primary btn-icon"
-					onClick={handleModalClose}
+					type="button"
+					className="rounded-lg p-2 text-surface-500 hover:bg-surface-100 hover:text-surface-700"
+					onClick={() => cartDispatch({ type: "SET_COUPON_OPTIONS_MODAL_VISIBILITY", payload: { modalVisibility: false } })}
+					aria-label="Close"
 				>
-					<i className="fa-solid fa-xmark"></i>
+					<i className="fa-solid fa-xmark" />
 				</button>
 			</div>
-			<div className="coupons-list flex-col flex-row flex-align-start flex-justify-center">
-				{couponOptions.map((option) =>
+			<div className="space-y-2 max-h-60 overflow-y-auto">
+				{couponOptions?.map((option) =>
 					cartItemsTotalPrice > option.minValue ? (
 						<label
 							key={option.id}
-							htmlFor={option.id}
-							className="flex-row flex-align-center flex-justify-start coupon-label px-1 py-0-25"
+							htmlFor={`coupon-${option.id}`}
+							className="flex cursor-pointer items-center gap-3 rounded-xl border border-surface-200 p-3 hover:bg-surface-50"
 						>
 							<input
 								type="radio"
 								name="coupon"
-								id={option.id}
+								id={`coupon-${option.id}`}
 								value={option.id}
-								onChange={handleCouponValueChange}
-								checked={selectedCoupon === option.id}
+								checked={selected === option.id}
+								onChange={(e) => setSelected(Number(e.target.value))}
+								className="h-4 w-4 text-surface-800"
 							/>
-							{option.coupon}
+							<span className="text-sm text-surface-700">{option.coupon}</span>
 						</label>
 					) : null
 				)}
 			</div>
-			<button
-				className="btn btn-primary p-0-25 btn-apply-coupon"
-				onClick={handleApplyCoupon}
-			>
+			<Button variant="primary" size="md" className="mt-6 w-full" onClick={handleApply}>
 				Apply
-			</button>
+			</Button>
 		</div>
 	);
 };

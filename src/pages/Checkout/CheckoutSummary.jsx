@@ -1,198 +1,117 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuid } from "uuid";
-
 import { useAuth, useCart, useOrders } from "contexts";
-import ProfileCSS from "pages/Profile/Profile.module.css";
 import { clearCartItems, postNewOrder } from "services";
-import bookeryIcon from "assets/images/bookery-icon.png";
+import booknookIcon from "assets/images/bookery-icon.png";
 import { useToast } from "custom-hooks";
+import { Button } from "components/ui";
 
 const RAZORPAY_URL = "https://checkout.razorpay.com/v1/checkout.js";
 
-const handleLoadScript = (src) => {
-	return new Promise((resolve, reject) => {
+const loadScript = (src) =>
+	new Promise((resolve, reject) => {
 		const script = document.createElement("script");
 		script.src = src;
-		script.onload = () => {
-			resolve(true);
-		};
-		script.onerror = () => {
-			reject(false);
-		};
+		script.onload = () => resolve(true);
+		script.onerror = () => reject(new Error("Failed to load script"));
 		document.body.appendChild(script);
 	});
-};
 
 const CheckoutSummary = () => {
-	const {
-		cartState: { checkoutData, selectedCoupon },
-		cartDispatch,
-	} = useCart();
-
+	const { cartState: { checkoutData, selectedCoupon }, cartDispatch } = useCart();
 	const navigate = useNavigate();
-	const {
-		authState: { token, user },
-	} = useAuth();
-
+	const { authState: { token, user } } = useAuth();
 	const { ordersDispatch } = useOrders();
-	const { addressCityState, addressItem } = ProfileCSS;
 	const { showToast } = useToast();
-
-	const [isOngoingNetworkCall, setIsOngoingNetworkCall] = useState(false);
+	const [loading, setLoading] = useState(false);
 
 	const placeOrder = async (order) => {
-		let orderId = uuid();
-		orderId =
-			orderId.split("-")?.length >= 3
-				? orderId.split("-").slice(0, 3).join("-")
-				: orderId;
-
-		setIsOngoingNetworkCall(true);
-
+		let orderId = uuid().split("-").slice(0, 3).join("-");
+		setLoading(true);
 		try {
-			const {
-				data: { orders },
-			} = await postNewOrder(token, {
-				...order,
-				orderId,
-				selectedCoupon,
-			});
-			ordersDispatch({
-				type: "SET_ORDERS",
-				payload: { orders },
-			});
-			showToast("Placed order successfully!", "success");
-
-			const {
-				data: { cart },
-			} = await clearCartItems(token);
-
-			cartDispatch({
-				type: "INIT_CART_ITEMS",
-				payload: {
-					carItems: cart,
-					loading: false,
-					error: null,
-				},
-			});
-
+			const { data: { orders } } = await postNewOrder(token, { ...order, orderId, selectedCoupon });
+			ordersDispatch({ type: "SET_ORDERS", payload: { orders } });
+			showToast("Order placed successfully!", "success");
+			const { data: { cart } } = await clearCartItems(token);
+			cartDispatch({ type: "INIT_CART_ITEMS", payload: { cartItems: cart, loading: false, error: null } });
 			navigate(`/order-summary/${orderId}`);
-		} catch (error) {
-			setIsOngoingNetworkCall(false);
-			showToast(
-				"Failed to place order. Please try again later.",
-				"error"
-			);
+		} catch {
+			setLoading(false);
+			showToast("Failed to place order. Please try again.", "error");
 		}
 	};
 
-	const handleShowRazorPay = async () => {
-		const response = await handleLoadScript(RAZORPAY_URL);
-
-		if (!response) {
-			showToast(
-				"Could not load razorpay payment options. Please try again later.",
-				"error"
-			);
+	const handleRazorpay = async () => {
+		try {
+			await loadScript(RAZORPAY_URL);
+		} catch {
+			showToast("Could not load payment. Try again.", "error");
 			return;
 		}
-
-		var options = {
+		const options = {
 			key: process.env.REACT_APP_RAZORPAY_KEY,
-			amount: checkoutData?.price * 100,
+			amount: (checkoutData?.price ?? 0) * 100,
 			currency: "INR",
-			name: "Bookery",
+			name: "Booknook",
 			description: "Thank you for shopping!",
-			image: bookeryIcon,
-
-			handler: async function (response) {
-				const { razorpay_payment_id } = await response;
-				const order = {
-					razorpayPaymentId: razorpay_payment_id,
+			image: booknookIcon,
+			handler: (response) => {
+				placeOrder({
+					razorpayPaymentId: response.razorpay_payment_id,
 					...checkoutData,
-				};
-				placeOrder(order);
+				});
 			},
 			prefill: {
 				name: checkoutData?.address?.name,
 				email: user?.email,
 				contact: checkoutData?.address?.phoneNumber,
 			},
-			theme: { color: "#3399cc" },
+			theme: { color: "#0f172a" },
 		};
-
-		const paymentObject = new Razorpay(options);
-		paymentObject.open();
+		const rzp = new window.Razorpay(options);
+		rzp.open();
 	};
 
 	return (
-		<section className="checkout-container checkout-order p-2 flex-col flex-align-start flex-justify-start">
-			<div className="flex-col mb-1-5 order-details">
-				<h6 className="section-head pb-0-5 text-left">Order Details</h6>
-				<div className="flex-row order-items-head flex-justify-between flex-align-center pt-0-75 pb-0-25">
-					<h6 className="item-head">Item</h6>
-					<h6 className="item-head text-right">Quantity</h6>
-				</div>
+		<section className="rounded-2xl border border-surface-200 bg-white p-6 shadow-card">
+			<h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-surface-700">
+				Order Details
+			</h3>
+			<div className="mb-6 space-y-2 border-b border-surface-100 pb-4">
 				{checkoutData?.items?.map((item) => (
-					<div
-						className="flex-row order-item flex-justify-between flex-align-start py-0-25"
-						key={item.id}
-					>
-						<p className="text-reg item-head">{item.title}</p>
-						<p className="text-reg item-content text-right">
-							{item.qty}
-						</p>
+					<div key={item.id} className="flex justify-between text-sm">
+						<span className="text-surface-700">{item.title}</span>
+						<span className="text-surface-500">Qty: {item.qty}</span>
 					</div>
 				))}
 			</div>
-			<div className="flex-col mb-1-5 order-details">
-				<h6 className="section-head pb-0-5 text-left">Price Details</h6>
-				<div className="flex-row order-items-head flex-justify-between flex-align-center pt-0-75 pb-0-25">
-					<h6 className="item-head">Total</h6>
-					<h6 className="item-head text-right">
-						₹ {checkoutData?.price}
-					</h6>
-				</div>
+			<div className="mb-6 flex justify-between border-b border-surface-100 pb-4 text-sm">
+				<span className="text-surface-600">Total</span>
+				<span className="font-semibold">₹ {checkoutData?.price}</span>
 			</div>
-			<div className="flex-col order-details">
-				<h6 className="section-head text-left pb-0-5">
-					Delivery Details
-				</h6>
-				<div className="flex-row order-items-head flex-justify-between flex-align-center pt-0-75 pb-0-25">
-					{!checkoutData?.address ? (
-						<h6 className="item-head">
-							Delivery details not selected
-						</h6>
-					) : (
-						<div
-							className={`${addressItem} flex-col flex-align-start flex-justify-center text-left`}
-						>
-							<h6 className="item-head">
-								{checkoutData?.address.name}
-							</h6>
-							<span>{checkoutData?.address.addressLine}</span>
-							<div
-								className={`${addressCityState} flex-row flex-justify-start flex-align-center`}
-							>
-								<span>{checkoutData?.address.city},</span>
-								<span>{checkoutData?.address.state},</span>
-								<span>{checkoutData?.address.pincode}</span>
-							</div>
-							<span>{checkoutData?.address.phoneNumber}</span>{" "}
-						</div>
-					)}
+			<h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-surface-700">
+				Delivery
+			</h3>
+			{checkoutData?.address ? (
+				<div className="mb-6 rounded-xl bg-surface-50 p-4 text-sm text-surface-700">
+					<p className="font-medium">{checkoutData.address.name}</p>
+					<p>{checkoutData.address.addressLine}</p>
+					<p>{checkoutData.address.city}, {checkoutData.address.state} - {checkoutData.address.pincode}</p>
+					<p>{checkoutData.address.phoneNumber}</p>
 				</div>
-			</div>
-			<button
-				className="btn btn-full-width mt-1  py-0-25 px-0-5 text-reg"
-				disabled={
-					checkoutData?.address ? false : true || isOngoingNetworkCall
-				}
-				onClick={handleShowRazorPay}
+			) : (
+				<p className="mb-6 text-sm text-surface-500">No address selected.</p>
+			)}
+			<Button
+				variant="primary"
+				size="lg"
+				fullWidth
+				disabled={!checkoutData?.address || loading}
+				onClick={handleRazorpay}
 			>
 				Place Order
-			</button>
+			</Button>
 		</section>
 	);
 };
