@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-
 import { useCart, useAddress } from "contexts/";
 import { CouponOptions } from "pages";
 import { getCartItemsData } from "utils/";
+import { Button } from "components/ui";
 
 const CartSummary = () => {
 	const {
@@ -11,13 +11,12 @@ const CartSummary = () => {
 		cartDispatch,
 		couponOptions,
 	} = useCart();
-
 	const { addresses } = useAddress();
 
-	const leastCouponValue = couponOptions.reduce(
-		(accum, option) => (option.minValue < accum ? option.minValue : accum),
+	const leastCouponValue = couponOptions?.reduce(
+		(acc, opt) => (opt.minValue < acc ? opt.minValue : acc),
 		Number.MAX_VALUE
-	);
+	) ?? 0;
 
 	const {
 		cartItemsTotalPrice,
@@ -27,31 +26,21 @@ const CartSummary = () => {
 		numCartItemsTotal,
 	} = getCartItemsData(cartItems);
 
-	const deliveryCharges = deliveryChargesApplicable ? (
-		<p className="text-reg item-content">₹ 49</p>
-	) : (
-		<p className="text-reg item-content">FREE</p>
-	);
-
-	const isAnyCouponSelected = selectedCoupon ?? false;
-
+	const deliveryCharges = deliveryChargesApplicable ? "₹ 49" : "FREE";
+	const isAnyCouponSelected = selectedCoupon != null;
 	const couponDiscountPrice = Math.round(
-		(selectedCoupon?.discount / 100) * cartItemsTotalPrice
+		(selectedCoupon?.discount ?? 0) / 100 * cartItemsTotalPrice
 	);
-
-	const priceAfterCouponApplied = Math.round(
+	const priceAfterCoupon = Math.round(
 		cartItemsTotalPrice - (selectedCoupon ? couponDiscountPrice : 0)
 	);
 
 	const handleRemoveCoupon = () => {
-		cartDispatch({
-			type: "SET_SELECTED_COUPON",
-			payload: { selectedCoupon: null },
-		});
+		cartDispatch({ type: "SET_SELECTED_COUPON", payload: { selectedCoupon: null } });
 	};
 
 	useEffect(() => {
-		if (selectedCoupon && cartItemsTotalPrice <= selectedCoupon?.minValue) {
+		if (selectedCoupon && cartItemsTotalPrice <= (selectedCoupon?.minValue ?? 0)) {
 			handleRemoveCoupon();
 		}
 	}, [cartItemsTotalPrice]);
@@ -61,10 +50,8 @@ const CartSummary = () => {
 			type: "SET_CHECKOUT_DATA",
 			payload: {
 				checkoutData: {
-					items: [...cartItems],
-					price: isAnyCouponSelected
-						? priceAfterCouponApplied
-						: cartItemsTotalPrice,
+					items: [...(cartItems ?? [])],
+					price: isAnyCouponSelected ? priceAfterCoupon : cartItemsTotalPrice,
 					address: addresses?.length ? { ...addresses[0] } : null,
 				},
 			},
@@ -72,76 +59,58 @@ const CartSummary = () => {
 	};
 
 	return (
-		<section className="checkout-container p-2 flex-col flex-align-center flex-justify-start">
-			<h4 className="section-head pb-1 text-center">
+		<section className="rounded-2xl border border-surface-200 bg-white p-6 shadow-card">
+			<h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-surface-700">
 				Price Details
-				<p className="text-reg">
-					({numCartItemsTotal}{" "}
-					{numCartItemsTotal !== 1 ? "items" : "item"})
-				</p>
-			</h4>
-			{cartItemsTotalPrice > leastCouponValue ? <CouponOptions /> : null}
-			<article className="payment-details">
-				<div className="flex-col py-1-5">
-					<div className="flex-row total-original-price flex-justify-between flex-align-center py-0-25">
-						<p className="text-reg item-head">Total Price</p>
-						<p className="text-reg item-content">
-							₹ {cartItemsTotalOriginalPrice}
-						</p>
-					</div>
-					<div className="flex-row total-saving-price flex-justify-between flex-align-center py-0-25">
-						<p className="text-reg item-head">Discount</p>
-						<p className="text-reg item-content">
-							- ₹ {cartItemsTotalSavingPrice}
-						</p>
-					</div>
-					<div className="flex-row delivery-charges flex-justify-between flex-align-center py-0-25">
-						<p className="text-reg item-head">Delivery Charges</p>
-						{deliveryCharges}
-					</div>
+			</h3>
+			<p className="mb-4 text-2xs text-surface-500">
+				{numCartItemsTotal} item{numCartItemsTotal !== 1 ? "s" : ""}
+			</p>
+			{cartItemsTotalPrice > leastCouponValue && <CouponOptions />}
+			<div className="space-y-3 border-t border-surface-100 pt-4">
+				<div className="flex justify-between text-sm">
+					<span className="text-surface-600">Total price</span>
+					<span>₹ {cartItemsTotalOriginalPrice}</span>
 				</div>
-				{isAnyCouponSelected ? (
-					<div className="total-charges flex-col pb-1">
-						<div className="pt-1 flex-row flex-justify-between flex-align-center">
-							<p className="text-reg item-head">Total</p>
-							<p className="text-reg item-content">
-								₹ {cartItemsTotalPrice}
-							</p>
-						</div>
-						<div className="coupon-data flex-row flex-justify-between flex-align-center">
-							<p className="text-reg item-head flex-row flex-justify-start flex-align-center">
-								<span>
-									Coupon {selectedCoupon.discount}% off
-								</span>
-								<button
-									className="btn btn-primary btn-outline px-0-25 text-sm"
-									onClick={handleRemoveCoupon}
-								>
-									Remove
-								</button>
-							</p>
-							<p className="text-reg item-content">
-								- ₹ {couponDiscountPrice}
-							</p>
-						</div>
-					</div>
-				) : null}
-
-				<div className="total-charges pt-1 flex-row flex-justify-between flex-align-center">
-					<p className="text-lg item-head">Subtotal</p>
-					<p className="text-lg item-content">
-						₹ {priceAfterCouponApplied}
-					</p>
+				<div className="flex justify-between text-sm">
+					<span className="text-surface-600">Discount</span>
+					<span className="text-success">- ₹ {cartItemsTotalSavingPrice}</span>
 				</div>
-
-				<Link
-					className="btn btn-full-width mt-1  py-0-25 px-0-5 text-reg"
-					onClick={handleCheckout}
-					to="/checkout"
-				>
-					Checkout
-				</Link>
-			</article>
+				<div className="flex justify-between text-sm">
+					<span className="text-surface-600">Delivery</span>
+					<span>{deliveryCharges}</span>
+				</div>
+				{isAnyCouponSelected && (
+					<div className="flex justify-between text-sm">
+						<span className="text-surface-600">
+							Coupon {selectedCoupon.discount}% off
+							<button
+								type="button"
+								className="ml-2 text-accent-600 hover:underline"
+								onClick={handleRemoveCoupon}
+							>
+								Remove
+							</button>
+						</span>
+						<span className="text-success">- ₹ {couponDiscountPrice}</span>
+					</div>
+				)}
+			</div>
+			<div className="mt-4 flex justify-between border-t border-surface-100 pt-4 text-base font-semibold">
+				<span>Subtotal</span>
+				<span>₹ {priceAfterCoupon}</span>
+			</div>
+			<Button
+				as={Link}
+				to="/checkout"
+				variant="primary"
+				fullWidth
+				size="lg"
+				className="mt-6"
+				onClick={handleCheckout}
+			>
+				Checkout
+			</Button>
 		</section>
 	);
 };

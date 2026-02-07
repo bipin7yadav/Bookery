@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-
 import {
 	useAddress,
 	useAuth,
@@ -11,30 +10,20 @@ import {
 } from "contexts";
 import { useOutsideClick, useToast } from "custom-hooks";
 
-const AccountOptions = ({}) => {
+const AccountOptions = () => {
 	const { authState, setAuthState, logoutUser } = useAuth();
-	const { isAuth } = authState;
-	const { showToast } = useToast();
+	const isAuth = authState?.isAuth;
+	const showToast = useToast().showToast;
 	const location = useLocation();
 	const navigate = useNavigate();
-	const [showAccountOptionsDrawer, setShowAccountOptionsDrawer] =
-		useState(false);
+	const [open, setOpen] = useState(false);
+	const ref = useRef(null);
 
 	useEffect(() => {
-		if (showAccountOptionsDrawer) setShowAccountOptionsDrawer(false);
+		if (open) setOpen(false);
 	}, [location?.pathname]);
 
-	const handleShowAccountOptionsChange = (event) => {
-		event.stopPropagation();
-		setShowAccountOptionsDrawer(
-			(prevShowAccountOptions) => !prevShowAccountOptions
-		);
-	};
-
-	const accountOptionsReference = useRef(null);
-	useOutsideClick(accountOptionsReference, () =>
-		setShowAccountOptionsDrawer(false)
-	);
+	useOutsideClick(ref, () => setOpen(false));
 
 	const handleAuth = () => {
 		if (isAuth) {
@@ -45,36 +34,41 @@ const AccountOptions = ({}) => {
 	};
 
 	return (
-		<li
-			className="list-item
-            flex-col
-            flex-align-center
-            flex-justify-center"
-			ref={accountOptionsReference}
-		>
+		<li className="relative flex items-center" ref={ref}>
 			<button
-				className="nav-link btn btn-link flex-col flex-align-center flex-justify-center"
-				onClick={handleShowAccountOptionsChange}
+				type="button"
+				onClick={(e) => {
+					e.stopPropagation();
+					setOpen((o) => !o);
+				}}
+				className="flex h-10 w-10 items-center justify-center rounded-xl text-surface-600 transition-colors hover:bg-surface-100 hover:text-surface-800"
+				aria-label="Account menu"
+				aria-expanded={open}
 			>
-				<i className="fa-solid fa-user fa-icon"></i>
+				<i className="fa-solid fa-user text-lg" />
 			</button>
-			{showAccountOptionsDrawer ? (
-				<ul className="account-details-options list list-style-none">
-					<li className="list-item p-0-5">
-						<Link className="btn btn-link text-reg" to="/profile">
+			{open && (
+				<ul className="absolute right-0 top-full z-50 mt-1 w-48 min-w-[140px] max-w-[calc(100vw-2rem)] rounded-xl border border-surface-200 bg-white py-1 shadow-large animate-fade-in">
+					<li className="border-b border-surface-100">
+						<Link
+							to="/profile"
+							className="block px-4 py-3 text-sm font-medium text-surface-700 hover:bg-surface-50"
+							onClick={() => setOpen(false)}
+						>
 							Profile
 						</Link>
 					</li>
-					<li className="list-item p-0-5">
+					<li>
 						<button
-							className="btn btn-link text-reg"
+							type="button"
+							className="block w-full px-4 py-3 text-left text-sm font-medium text-surface-700 hover:bg-surface-50"
 							onClick={handleAuth}
 						>
 							{isAuth ? "Logout" : "Login"}
 						</button>
 					</li>
 				</ul>
-			) : null}
+			)}
 		</li>
 	);
 };

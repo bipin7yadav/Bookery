@@ -1,138 +1,129 @@
 import React, { useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Close, Search } from "@mui/icons-material";
-
 import { useAuth, useCart, useFilter, useWishList } from "contexts";
 import { getCartItemsTotal } from "utils";
 import { useOutsideClick, useToast } from "custom-hooks";
 import { AccountOptions } from "components";
-import "./navbar.css";
+import { Button } from "components/ui";
 
 const Navbar = () => {
 	const { authState } = useAuth();
-	const { isAuth } = authState;
+	const isAuth = authState?.isAuth;
 	const navigate = useNavigate();
 	const location = useLocation();
-	const {
-		wishListState: { wishListItems },
-	} = useWishList();
-	const {
-		cartState: { cartItems },
-	} = useCart();
+	const { wishListState: { wishListItems } = {} } = useWishList();
+	const { cartState: { cartItems } = {} } = useCart();
+	const { filterState: { searchText } = {}, filterDispatch } = useFilter();
+	const drawerRef = useRef(null);
+	const [mobileNavOpen, setMobileNavOpen] = useState(false);
+	const [searchOpen, setSearchOpen] = useState(false);
 
-	const {
-		filterState: { searchText },
-		filterDispatch,
-	} = useFilter();
+	useOutsideClick(drawerRef, () => setMobileNavOpen(false));
 
-	const drawerReference = useRef(null);
+	const totalCartItems = isAuth && cartItems?.length ? getCartItemsTotal(cartItems, "TOTAL_ITEMS") : 0;
+	const totalWishListItems = isAuth && wishListItems?.length ? wishListItems.length : 0;
 
-	const [mobileNavbarOpen, setMobileNavbarOpen] = useState(false);
-	const [showSearchDrawer, setShowSearchDrawer] = useState(false);
-
-	const handleNavbarStateChange = (e) => {
-		e.stopPropagation();
-		setMobileNavbarOpen((prevMovileNavbarOpen) => !prevMovileNavbarOpen);
+	const handleSearchSubmit = (e) => {
+		e.preventDefault();
+		if (searchText?.trim() && location.pathname !== "/products") navigate("/products");
+		setSearchOpen(false);
 	};
 
-	const handleShowSearchDrawerChange = (isShown) => {
-		setShowSearchDrawer(isShown);
+	const handleSearchChange = (e) => {
+		filterDispatch({ filterType: "SET_SEARCH_TEXT", filterPayload: e.target.value });
+		if (searchText?.trim() && location.pathname !== "/products") navigate("/products");
 	};
-
-	const navigateToProducts = (event) => {
-		event.preventDefault();
-		if (searchText.trim() !== "" && location.pathName !== "/products") {
-			navigate("/products");
-		}
-		handleShowSearchDrawerChange(false);
-	};
-
-	const handleChangeSearchText = (event) => {
-		filterDispatch({
-			filterType: "SET_SEARCH_TEXT",
-			filterPayload: event.target.value,
-		});
-		if (searchText.trim() !== "" && location.pathName !== "/products") {
-			navigate("/products");
-		}
-	};
-
-	const totalCartItems = isAuth
-		? cartItems?.length
-			? getCartItemsTotal(cartItems, "TOTAL_ITEMS")
-			: 0
-		: 0;
-	const totalWishListItems = isAuth
-		? wishListItems?.length
-			? wishListItems.length
-			: 0
-		: 0;
-
-	useOutsideClick(drawerReference, () => setMobileNavbarOpen(false));
 
 	return (
-		<nav className="navbar">
-			<div className="navbar-wrapper flex-row flex-align-center mx-auto flex-justify-between">
-				<button
-					className="hamburger btn btn-link nav-link"
-					onClick={handleNavbarStateChange}
+		<nav className="relative sticky top-0 z-50 border-b border-surface-200 bg-white/95 shadow-soft backdrop-blur-sm">
+			<div className="page-container flex h-14 min-h-[44px] items-center justify-between gap-2 sm:h-16 sm:gap-4">
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					className="md:hidden"
+					onClick={() => setMobileNavOpen((o) => !o)}
+					aria-label="Menu"
 				>
-					<i className="fa-solid fa-bars fa-icon"></i>
-				</button>
-				<h4 className="logo flex-col flex-align-center flex-justify-center">
-					<Link to="/" className="nav-link btn btn-link">
-						Bookery
-					</Link>
-				</h4>
-				<ul className="navlinks desktop-navbar flex-align-center list list-inline">
-					<li className="list-item">
+					<i className="fa-solid fa-bars text-lg text-surface-600" />
+				</Button>
+
+				<NavLink
+					to="/"
+					className="hidden text-xl font-semibold tracking-tight text-surface-900 transition-opacity hover:opacity-80 md:block"
+				>
+					Booknook
+				</NavLink>
+
+				<ul className="hidden items-center gap-1 md:flex">
+					<li>
 						<NavLink
 							to="/"
-							className="nav-link main-nav-link btn btn-link flex-col flex-align-center flex-justify-center"
+							className={({ isActive }) =>
+								`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+									isActive ? "text-surface-900 bg-surface-100" : "text-surface-600 hover:bg-surface-50 hover:text-surface-800"
+								}`
+							}
 						>
 							Home
 						</NavLink>
 					</li>
-					<li className="list-item">
+					<li>
 						<NavLink
 							to="/products"
-							className="nav-link main-nav-link btn btn-link flex-col flex-align-center flex-justify-center"
+							className={({ isActive }) =>
+								`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+									isActive ? "text-surface-900 bg-surface-100" : "text-surface-600 hover:bg-surface-50 hover:text-surface-800"
+								}`
+							}
 						>
 							Shop
 						</NavLink>
 					</li>
 				</ul>
+
+				{/* Mobile drawer */}
 				<div
-					className={`mobile-navbar-drawer ${
-						mobileNavbarOpen ? "navbar-open" : "navbar-close"
+					className={`fixed inset-0 z-40 bg-surface-900/50 transition-opacity md:hidden ${mobileNavOpen ? "visible opacity-100" : "invisible opacity-0"}`}
+					aria-hidden={!mobileNavOpen}
+				/>
+				<div
+					ref={drawerRef}
+					className={`fixed left-0 top-0 z-50 flex h-full w-full max-w-[280px] flex-col border-r border-surface-200 bg-white shadow-large transition-transform duration-300 ease-smooth md:hidden ${
+						mobileNavOpen ? "translate-x-0" : "-translate-x-full"
 					}`}
 				>
-					<ul
-						className="navlinks-mobile list-style-none flex-col flex-align-start flex-justify-start py-2 px-2"
-						ref={drawerReference}
-					>
-						<li className="list-item py-1-5">
-							<h3 className="flex-col flex-align-start flex-justify-center">
-								<Link
-									to="/"
-									className="logo nav-link btn btn-link"
-								>
-									Bookery
-								</Link>
-							</h3>
-						</li>
-						<li className="list-item py-1-5">
+					<div className="flex items-center justify-between border-b border-surface-100 p-4">
+						<NavLink to="/" className="text-lg font-semibold text-surface-900" onClick={() => setMobileNavOpen(false)}>
+							Booknook
+						</NavLink>
+						<Button variant="ghost" size="icon-sm" onClick={() => setMobileNavOpen(false)} aria-label="Close menu">
+							<i className="fa-solid fa-times" />
+						</Button>
+					</div>
+					<ul className="flex flex-col gap-1 p-4">
+						<li>
 							<NavLink
 								to="/"
-								className="nav-link main-nav-link btn btn-link flex-col flex-align-center flex-justify-center text-xs"
+								onClick={() => setMobileNavOpen(false)}
+								className={({ isActive }) =>
+									`block rounded-xl px-4 py-3 text-sm font-medium ${
+										isActive ? "bg-surface-100 text-surface-900" : "text-surface-600"
+									}`
+								}
 							>
 								Home
 							</NavLink>
 						</li>
-						<li className="list-item py-1-5">
+						<li>
 							<NavLink
 								to="/products"
-								className="nav-link main-nav-link btn btn-link flex-col flex-align-center flex-justify-center text-xs"
+								onClick={() => setMobileNavOpen(false)}
+								className={({ isActive }) =>
+									`block rounded-xl px-4 py-3 text-sm font-medium ${
+										isActive ? "bg-surface-100 text-surface-900" : "text-surface-600"
+									}`
+								}
 							>
 								Shop
 							</NavLink>
@@ -140,82 +131,78 @@ const Navbar = () => {
 					</ul>
 				</div>
 
+				{/* Search overlay - full width within nav */}
 				<div
-					className={`search-container ${
-						showSearchDrawer
-							? "show-search-drawer"
-							: "hide-search-drawer"
+					className={`absolute left-0 right-0 top-0 z-30 flex min-h-[180px] flex-col items-center justify-center gap-3 border-b border-surface-200 bg-surface-900 px-3 py-4 sm:gap-4 sm:px-4 sm:py-6 transition-all duration-300 ${
+						searchOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0 pointer-events-none"
 					}`}
 				>
 					<button
-						className="btn btn-icon"
-						onClick={() => handleShowSearchDrawerChange(false)}
+						type="button"
+						className="absolute right-4 top-4 rounded-lg p-2 text-surface-300 hover:bg-white/10 hover:text-white"
+						onClick={() => setSearchOpen(false)}
+						aria-label="Close search"
 					>
-						<Close className="close-icon" />
+						<Close />
 					</button>
-					<h2 className="search-container-head">Welcome</h2>
-					<p>What book are you in the mood for today?</p>
-					<form onSubmit={navigateToProducts}>
-						<div className="input-group input-search-group input-default input-inline">
-							<label
-								className="text-label flex-row flex-align-center flex-justify-between p-0-5 px-0-5"
-								htmlFor="input-inline-search"
+					<p className="text-sm text-surface-300">What book are you in the mood for today?</p>
+					<form onSubmit={handleSearchSubmit} className="w-full max-w-xl px-1">
+						<div className="flex rounded-xl border border-surface-600 bg-surface-800 focus-within:ring-2 focus-within:ring-accent-500">
+							<input
+								type="search"
+								placeholder="Search books by name or author..."
+								value={searchText ?? ""}
+								onChange={handleSearchChange}
+								className="flex-1 rounded-l-xl border-0 bg-transparent px-4 py-3 text-white placeholder-surface-400 focus:outline-none focus:ring-0"
+							/>
+							<button
+								type="submit"
+								className="rounded-r-xl px-4 py-3 text-surface-300 hover:bg-surface-700 hover:text-white"
 							>
-								<input
-									type="search"
-									id="input-inline-search"
-									className="px-0-25 input-text text-reg"
-									placeholder="Search books by name or author..."
-									value={searchText}
-									onChange={handleChangeSearchText}
-								/>
-								<button
-									type="submit"
-									className="btn btn-icon btn-search-submit flex-row flex-align-center"
-								>
-									<Search className="mobile-search-icon" />
-								</button>
-							</label>
-							<span className="text-message mt-0-5"></span>
+								<Search />
+							</button>
 						</div>
 					</form>
 				</div>
 
-				<ul className="navlinks list list-inline flex-align-center">
-					<li className="list-item flex-col flex-align-center flex-justify-center">
-						<button
-							className="btn btn-link nav-link"
-							onClick={() => handleShowSearchDrawerChange(true)}
+				<ul className="flex items-center gap-1">
+					<li>
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							onClick={() => setSearchOpen(true)}
+							aria-label="Search"
 						>
-							<i className="fa-solid fa-magnifying-glass fa-icon"></i>
-						</button>
+							<i className="fa-solid fa-magnifying-glass text-surface-600" />
+						</Button>
 					</li>
-
-					<li className="list-item badge-container flex-col flex-align-center flex-justify-center">
-						<div className="badge-icon">
-							<Link
-								to="/cart"
-								className="nav-link btn btn-link flex-col flex-align-center flex-justify-center"
-							>
-								<i className="fa-solid fa-cart-shopping fa-icon"></i>
-							</Link>
-						</div>
-						<span className="badge-status badge-primary badge-notification p-0-25 flex-col flex-align-center flex-justify-center">
-							{totalCartItems > 9 ? "9+" : totalCartItems}
-						</span>
+					<li className="relative">
+						<Link
+							to="/cart"
+							className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-surface-600 transition-colors hover:bg-surface-100 hover:text-surface-800 active:bg-surface-100"
+							aria-label="Cart"
+						>
+							<i className="fa-solid fa-cart-shopping text-lg" />
+						</Link>
+						{totalCartItems > 0 && (
+							<span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-surface-800 px-1.5 text-2xs font-semibold text-white">
+								{totalCartItems > 9 ? "9+" : totalCartItems}
+							</span>
+						)}
 					</li>
-					<li className="list-item badge-container flex-col flex-align-center flex-justify-center">
-						<div className="badge-icon">
-							<Link
-								to="/wishlist"
-								className="nav-link btn btn-link flex-col flex-align-center flex-justify-center"
-							>
-								<i className="fa-solid fa-heart fa-icon"></i>
-							</Link>
-						</div>
-						<span className="badge-status badge-primary badge-notification p-0-25 flex-col flex-align-center flex-justify-center">
-							{totalWishListItems > 9 ? "9+" : totalWishListItems}
-						</span>
+					<li className="relative">
+						<Link
+							to="/wishlist"
+							className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-surface-600 transition-colors hover:bg-surface-100 hover:text-surface-800 active:bg-surface-100"
+							aria-label="Wishlist"
+						>
+							<i className="fa-solid fa-heart text-lg" />
+						</Link>
+						{totalWishListItems > 0 && (
+							<span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-surface-800 px-1.5 text-2xs font-semibold text-white">
+								{totalWishListItems > 9 ? "9+" : totalWishListItems}
+							</span>
+						)}
 					</li>
 					<AccountOptions />
 				</ul>

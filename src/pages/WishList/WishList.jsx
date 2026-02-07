@@ -1,65 +1,67 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-
 import { WishListItem } from "components";
 import { useWishList } from "contexts";
 import { useDocumentTitle } from "custom-hooks";
-import loadingImage from "assets/images/loader.svg";
-import "./WishList.css";
+import { LoadingSpinner, EmptyState, Button } from "components/ui";
 
 const WishList = () => {
-	const {
-		wishListState: { wishListItems, loading, error },
-	} = useWishList();
-
+	const { wishListState: { wishListItems, loading, error } } = useWishList();
 	const { setDocumentTitle } = useDocumentTitle();
 
 	useEffect(() => {
-		setDocumentTitle("Bookery | Wishlist");
-	}, []);
+		setDocumentTitle("Booknook | Wishlist");
+	}, [setDocumentTitle]);
+
+	if (loading) {
+		return (
+			<main className="main-content page-section flex min-h-[40vh] items-center justify-center">
+				<LoadingSpinner />
+			</main>
+		);
+	}
+
+	if (error) {
+		return (
+			<main className="main-content page-section">
+				<div className="page-container">
+					<p className="py-12 text-center text-error">{error}</p>
+					<div className="flex justify-center">
+						<Button as={Link} to="/products">Shop for books</Button>
+					</div>
+				</div>
+			</main>
+		);
+	}
 
 	return (
-		<main className="main wishlist-main my-2 mx-auto py-2 px-3">
-			{loading ? (
-				<img
-					src={loadingImage}
-					alt="Loading svg"
-					className="img img-responsive mx-auto loader-img"
-				/>
-			) : error ? (
-				<h1 className="error text error-color my-2 text-center loader-error">
-					{error}
+		<main className="main-content page-section">
+			<div className="page-container">
+				<h1 className="mb-6 text-center text-xl font-semibold text-surface-900 sm:mb-8 sm:text-2xl">
+					My Wishlist
 				</h1>
-			) : (
-				<>
-					{wishListItems.length ? (
-						<div className="wishlist-main-head">
-							<h2 className="main-head text-left mb-2 py-0-25 text-center">
-								My Wishlist
-							</h2>
-							<section className="wishList-wrapper products-container grid grid-autofit">
-								{wishListItems.map((wishListItem) => (
-									<WishListItem
-										key={wishListItem._id}
-										wishListItem={wishListItem}
-									/>
-								))}
-							</section>
-						</div>
-					) : (
-						<>
-							<div className="wishlist-main-head">
-								<h2 className="main-head text-center">
-									Your Wishlist empty!
-								</h2>
-							</div>
-						</>
-					)}
-				</>
-			)}
-			<button className="btn btn-primary mt-2 px-0-75 py-0-25 mx-auto">
-				<Link to="/products">Shop for books!</Link>
-			</button>
+				{wishListItems?.length ? (
+					<div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 min-w-0">
+						{wishListItems.map((item) => (
+							<WishListItem key={item._id} wishListItem={item} />
+						))}
+					</div>
+				) : (
+					<EmptyState
+						title="Your wishlist is empty"
+						description="Save books you like to buy them later."
+						actionLabel="Shop for books"
+						actionTo="/products"
+					/>
+				)}
+				{wishListItems?.length > 0 && (
+					<div className="mt-8 flex justify-center">
+						<Button as={Link} to="/products" variant="outline">
+							Continue shopping
+						</Button>
+					</div>
+				)}
+			</div>
 		</main>
 	);
 };

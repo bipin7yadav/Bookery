@@ -1,10 +1,9 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
-
 import { Header } from "components/Header/Header";
 import { useProduct } from "contexts";
 import { useDocumentTitle } from "custom-hooks";
-import "./landing-page.css";
+import { Button, LoadingSpinner } from "components/ui";
 import loadingImage from "assets/images/loader.svg";
 
 const LandingPage = () => {
@@ -14,12 +13,11 @@ const LandingPage = () => {
 		categories = [],
 		categoriesMessages: { loading, error } = {},
 	} = useProduct();
-
 	const { setDocumentTitle } = useDocumentTitle();
 
 	useEffect(() => {
-		setDocumentTitle("Bookery | Home");
-	}, []);
+		setDocumentTitle("Booknook | Home");
+	}, [setDocumentTitle]);
 
 	const categoryMapping = categories.map(
 		({ categoryImage, categoryName, _id }) => (
@@ -27,124 +25,111 @@ const LandingPage = () => {
 				to="/products"
 				state={categoryName}
 				key={_id}
-				className="category-product-link category card card-wt-badge"
+				className="group block overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card transition-all duration-200 hover:shadow-cardHover hover:border-surface-300"
 			>
-				<img
-					src={categoryImage}
-					alt={`${categoryName} Image`}
-					className="category-img img-responsive"
-				/>
-				{categoryName === "Non-Fiction" ? (
-					<span className="badge badge-primary py-0-5 my-0-75 mx-0-25 px-0-75">
-						Hot Sale
-					</span>
-				) : null}
-				<div className="card-content">
-					<h4 className="card-heading mb-1">{categoryName}</h4>
+				<div className="relative aspect-[4/3] overflow-hidden bg-surface-100">
+					<img
+						src={categoryImage}
+						alt={`${categoryName}`}
+						className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+					/>
+					{categoryName === "Non-Fiction" && (
+						<span className="absolute right-3 top-3 rounded-lg bg-surface-800 px-2.5 py-1 text-2xs font-medium text-white">
+							Hot Sale
+						</span>
+					)}
+				</div>
+				<div className="p-5">
+					<h4 className="font-semibold text-surface-900">{categoryName}</h4>
 				</div>
 			</Link>
 		)
 	);
 
-	const sampleProducts = products?.slice(0, 4);
-
+	const sampleProducts = products?.slice(0, 4) || [];
 	const sampleProductsMapping = sampleProducts.map(
-		({ _id, id, title, author, coverImg }) => (
+		({ _id, title, author, coverImg }) => (
 			<Link
 				to={`/products/${_id}`}
-				className="product-card card card-vertical"
 				key={_id}
+				className="group block overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card transition-all duration-200 hover:shadow-cardHover hover:border-surface-300"
 			>
-				<div className="card-header p-0-75">
+				<div className="aspect-[3/4] overflow-hidden bg-surface-100">
 					<img
 						src={coverImg}
-						className="book-cover"
-						alt={`${title} book cover`}
+						alt={title}
+						className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
 					/>
 				</div>
-				<div className="card-body px-0-75 pb-0-75">
-					<div className="card-description my-0-25">
-						<p className="card-title text-sm">{title}</p>
-						<p className="text-xs card-subtitle mt-0-5">{author}</p>
-					</div>
+				<div className="p-5">
+					<p className="font-medium text-surface-900 line-clamp-2">{title}</p>
+					<p className="mt-1 text-sm text-surface-500">{author}</p>
 				</div>
 			</Link>
 		)
 	);
+
 	return (
 		<>
 			<Header />
-			<main className="main-home my-2 mx-auto py-5 px-3">
-				<h4 className="hero-sub-head text-center pt-2">
-					Now, get your books delivered within 24 hours to your
-					doorstep!
-				</h4>
-				<section
-					className="section-cateogies my-3 pt-2 pb-3 text-center"
-					id="categories"
-				>
-					<h2 className="section__head">Popular Genres</h2>
-					<p className="section__lead my-2">
-						Check out the popular genres we have to offer!
-					</p>
-					<article className="category-container">
-						{loading ? (
-							<img
-								src={loadingImage}
-								alt="Loading svg"
-								className="img img-responsive mx-auto loader-img"
-							/>
-						) : error ? (
-							<h3 className="error-color text-center my-2 mx-auto loader-error">
-								{error}
-							</h3>
-						) : (
-							categoryMapping
-						)}
-					</article>
-					<Link
-						to="/products"
-						className="btn btn-primary text-center mx-auto mt-3 py-0-5 px-0-75"
-					>
-						Discover more genres!
-						<span className="icon">
-							<i className="fas fa-chevron-right"></i>
-						</span>
-					</Link>
-				</section>
-				<section
-					className="top-picks my-3 pt-2 pb-3 text-center"
-					id="top-picks"
-				>
-					<h2 className="section__head">Top Picks</h2>
-					<p className="section__lead my-2">
-						Find out what books are loved by all!
-					</p>
-					<article className="top-picks-container mx-auto">
-						{productLoading ? (
-							<img
-								src={loadingImage}
-								alt="Loading svg"
-								className="img img-responsive mx-auto loader-img"
-							/>
-						) : error ? (
-							<h3 className="error-color text-center my-2 mx-auto loader-error">
-								{productError}
-							</h3>
-						) : (
-							sampleProductsMapping
-						)}
-					</article>
-					<Link
-						to="/products"
-						className="btn btn-primary text-center mx-auto mt-3 py-0-5 px-0-75"
-					>
-						Discover more books!
-						<span className="icon">
-							<i className="fas fa-chevron-right"></i>
-						</span>
-					</Link>
-				</section>
+			<main className="page-section">
+				<div className="page-container">
+					<h2 className="text-center text-xl font-semibold text-surface-900 sm:text-2xl lg:text-3xl px-2">
+						Now, get your books delivered within 24 hours to your doorstep!
+					</h2>
+
+					<section className="mt-10 sm:mt-16" id="categories">
+						<h2 className="text-center text-lg font-semibold text-surface-900 sm:text-xl">
+							Popular Genres
+						</h2>
+						<p className="mt-2 text-center text-sm text-surface-600 px-2">
+							Check out the popular genres we have to offer!
+						</p>
+						<div className="mt-6 sm:mt-8">
+							{loading ? (
+								<LoadingSpinner className="py-12" />
+							) : error ? (
+								<p className="text-center text-error">{error}</p>
+							) : (
+								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+									{categoryMapping}
+								</div>
+							)}
+						</div>
+						<div className="mt-8 flex justify-center">
+							<Button as={Link} to="/products" size="md">
+								Discover more genres
+								<i className="fas fa-chevron-right ml-1 text-sm" />
+							</Button>
+						</div>
+					</section>
+
+					<section className="mt-12 sm:mt-20" id="top-picks">
+						<h2 className="text-center text-lg font-semibold text-surface-900 sm:text-xl">
+							Top Picks
+						</h2>
+						<p className="mt-2 text-center text-sm text-surface-600 px-2">
+							Find out what books are loved by all!
+						</p>
+						<div className="mt-6 sm:mt-8">
+							{productLoading ? (
+								<LoadingSpinner className="py-12" />
+							) : productError ? (
+								<p className="text-center text-error">{productError}</p>
+							) : (
+								<div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-3 lg:grid-cols-4">
+									{sampleProductsMapping}
+								</div>
+							)}
+						</div>
+						<div className="mt-8 flex justify-center">
+							<Button as={Link} to="/products" size="md">
+								Discover more books
+								<i className="fas fa-chevron-right ml-1 text-sm" />
+							</Button>
+						</div>
+					</section>
+				</div>
 			</main>
 		</>
 	);

@@ -1,243 +1,148 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-
 import { initiateLogin } from "services";
 import { useAuth, useCart, useOrders, useWishList } from "contexts/";
 import { useDocumentTitle, useToast } from "custom-hooks";
-import "./auth.css";
+import { Button, Input } from "components/ui";
 
 const Login = () => {
-	const initialFormData = {
+	const [formData, setFormData] = useState({
 		email: "",
 		password: "",
 		rememberMe: false,
-	};
-	const [formData, setFormData] = useState(initialFormData);
+	});
 	const [showPassword, setShowPassword] = useState(false);
-	const [isOngoingNetworkCall, setIsOngoingNetworkCall] = useState(false);
+	const [loading, setLoading] = useState(false);
 
 	const navigate = useNavigate();
 	const location = useLocation();
-
-	const {
-		setAuthState,
-		authState: { isAuth },
-	} = useAuth();
+	const { setAuthState, authState: { isAuth } } = useAuth();
 	const { cartDispatch } = useCart();
 	const { wishListDispatch } = useWishList();
-	const { showToast } = useToast();
 	const { ordersDispatch } = useOrders();
+	const { showToast } = useToast();
 	const { setDocumentTitle } = useDocumentTitle();
 
 	useEffect(() => {
-		if (isAuth) {
-			navigate(location?.state?.from ?? -1, { replace: true });
-		}
-		setDocumentTitle("Bookery | Login");
+		if (isAuth) navigate(location?.state?.from ?? -1, { replace: true });
+		setDocumentTitle("Booknook | Login");
 	}, []);
 
-	const handleFormDataChange = (event) => {
-		const { name, value, checked } = event.target;
-
-		setFormData((prevFormData) => ({
-			...prevFormData,
+	const handleChange = (e) => {
+		const { name, value, checked } = e.target;
+		setFormData((prev) => ({
+			...prev,
 			[name]: name === "rememberMe" ? checked : value,
 		}));
 	};
 
-	const showPasswordIcon = showPassword ? (
-		<VisibilityOffIcon />
-	) : (
-		<VisibilityIcon />
-	);
-
-	const handleFormSubmit = async (event) => {
-		event.preventDefault();
-
-		setIsOngoingNetworkCall(true);
-
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		setLoading(true);
 		try {
 			const { data } = await initiateLogin(formData);
-			showToast("Login Successful!", "success");
-			const {
-				user: {
-					token,
-					cart: cartItems,
-					wishlist,
-					orders,
-					address,
-					...otherUserDetails
-				},
-			} = data;
-			setAuthState({
-				isAuth: true,
-				token,
-				user: { ...otherUserDetails },
-			});
-
+			showToast("Login successful!", "success");
+			const { user: { token, cart: cartItems, wishlist, orders, address, ...userDetails } } = data;
+			setAuthState({ isAuth: true, token, user: userDetails });
 			cartDispatch({ type: "INIT_CART_ITEMS", payload: { cartItems } });
-			wishListDispatch({
-				type: "INIT_WISHLIST_ITEMS",
-				payload: {
-					wishListItems: wishlist,
-					error: null,
-					loading: false,
-				},
-			});
-			ordersDispatch({
-				type: "SET_ORDERS",
-				payload: { orders },
-			});
-
-			if (rememberMe) {
-				localStorage.setItem("bookery-token", token);
-				localStorage.setItem(
-					"bookery-user",
-					JSON.stringify(otherUserDetails)
-				);
+			wishListDispatch({ type: "INIT_WISHLIST_ITEMS", payload: { wishListItems: wishlist, error: null, loading: false } });
+			ordersDispatch({ type: "SET_ORDERS", payload: { orders } });
+			if (formData.rememberMe) {
+				localStorage.setItem("booknook-token", token);
+				localStorage.setItem("booknook-user", JSON.stringify(userDetails));
 			}
 			navigate(location?.state?.from ?? -1, { replace: true });
-		} catch (error) {
-			showToast("Login Failed. Please try again later", "error");
-			setIsOngoingNetworkCall(false);
+		} catch {
+			showToast("Login failed. Please try again.", "error");
 		}
+		setLoading(false);
 	};
 
-	const { email, password, rememberMe } = formData;
-	const handleChangePasswordVisibility = () =>
-		setShowPassword((prevShowPassword) => !prevShowPassword);
-
-	const handleLoginWithTestCredentials = (event) => {
+	const handleTestCredentials = (e) => {
+		e.preventDefault();
 		setFormData({
-			email: process.env.REACT_APP_GUEST_USER_EMAIL,
-			password: process.env.REACT_APP_GUEST_USER_PASSWORD,
+			email: process.env.REACT_APP_GUEST_USER_EMAIL ?? "test@example.com",
+			password: process.env.REACT_APP_GUEST_USER_PASSWORD ?? "password123",
 			rememberMe: true,
 		});
 	};
 
+	const { email, password, rememberMe } = formData;
+
 	return (
-		<section className="auth-main flex-col flex-align-center flex-justify-center mx-auto py-2 px-3">
-			<div className="auth-wrapper">
-				<section className="auth-container login-container mx-auto mb-1 px-1-5 py-2">
-					<h3 className="text-center text-uppercase auth-head mb-1">
+		<main className="main-content page-section flex min-h-[80vh] items-center justify-center px-3">
+			<div className="w-full max-w-md min-w-0">
+				<div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-card sm:p-8">
+					<h1 className="text-center text-xl font-semibold uppercase tracking-wider text-surface-900">
 						Login
-					</h3>
-					<form
-						className="auth-form px-1 flex-col flex-align-center flex-justify-center"
-						onSubmit={handleFormSubmit}
-					>
-						<div className="input-group input-default mx-auto">
-							<label
-								className="text-label text-reg flex-col mx-auto"
-								htmlFor="input-login-email"
+					</h1>
+					<form onSubmit={handleSubmit} className="mt-8 space-y-5">
+						<Input
+							label="Email"
+							type="email"
+							name="email"
+							id="login-email"
+							placeholder="janedoe@gmail.com"
+							value={email}
+							onChange={handleChange}
+							required
+						/>
+						<div className="relative">
+							<Input
+								label="Password"
+								type={showPassword ? "text" : "password"}
+								name="password"
+								id="login-password"
+								placeholder="********"
+								value={password}
+								onChange={handleChange}
+								required
+							/>
+							<button
+								type="button"
+								className="absolute right-3 top-9 text-surface-400 hover:text-surface-600"
+								onClick={() => setShowPassword((p) => !p)}
+								aria-label={showPassword ? "Hide password" : "Show password"}
 							>
-								Email
-								<input
-									type="email"
-									name="email"
-									id="input-login-email"
-									className="input-text text-sm px-0-75 py-0-25 mt-0-25"
-									placeholder="janedoe@gmail.com"
-									value={email}
-									onChange={handleFormDataChange}
-									required
-								/>
-							</label>
-							<span className="text-message mt-0-5 text-xs"></span>
+								{showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+							</button>
 						</div>
-						<div className="input-group input-default mx-auto">
-							<label
-								className="text-label text-reg flex-col mx-auto text-sm"
-								htmlFor="input-login-psd"
+						<label className="flex cursor-pointer items-center gap-2 text-sm text-surface-600">
+							<input
+								type="checkbox"
+								name="rememberMe"
+								checked={rememberMe}
+								onChange={handleChange}
+								className="h-4 w-4 rounded border-surface-300 text-surface-800"
+							/>
+							Remember me
+						</label>
+						<div className="space-y-3">
+							<Button type="submit" fullWidth size="lg" disabled={loading}>
+								Login
+							</Button>
+							<Button
+								type="button"
+								variant="outline"
+								fullWidth
+								size="lg"
+								disabled={loading}
+								onClick={handleTestCredentials}
 							>
-								Password
-								<span className="password-input-toggler">
-									<input
-										type={`${
-											showPassword ? "text" : "password"
-										}`}
-										id="input-login-psd"
-										className="input-text px-0-75 py-0-25 mt-0-25 text-sm"
-										placeholder="********"
-										name="password"
-										value={password}
-										onChange={handleFormDataChange}
-										autoComplete="off"
-										required
-									/>
-									<button
-										type="button"
-										className={`btn btn-icon icon-show-psd ${
-											isOngoingNetworkCall &&
-											"btn-disabled"
-										}`}
-										disabled={isOngoingNetworkCall}
-										onClick={handleChangePasswordVisibility}
-									>
-										<span className="icon mui-icon">
-											{showPasswordIcon}
-										</span>
-									</button>
-								</span>
-							</label>
-							<span className="text-message text-xs mt-0-5"></span>
+								Use test credentials
+							</Button>
 						</div>
-						<div className="psd-mgmt-container flex-row flex-align-center flex-justify-between flex-wrap my-0-5">
-							<label
-								htmlFor="checkbox-remember"
-								className="flex-row input-checkbox-remember flex-align-center text-sm"
-							>
-								<input
-									type="checkbox"
-									className="input-checkbox text-reg"
-									name="rememberMe"
-									id="checkbox-remember"
-									checked={rememberMe}
-									onChange={handleFormDataChange}
-								/>
-								Remember me
-							</label>
-						</div>
-						<div className="auth-button-container flex-col flex-align-center">
-							<div className="login-button-container flex-col flex-align-center flex-justify-center">
-								<input
-									type="submit"
-									className={`btn btn-primary btn-full-width px-0-75 py-0-25 btn-full-width text-reg ${
-										isOngoingNetworkCall && "btn-disabled"
-									}`}
-									value="Login"
-									disabled={isOngoingNetworkCall}
-								/>
-								<input
-									type="submit"
-									className={`btn btn-primary btn-outline btn-full-width px-0-75 py-0-25 btn-full-width text-reg ${
-										isOngoingNetworkCall && "btn-disabled"
-									}`}
-									value="Login with Test Credentials"
-									disabled={isOngoingNetworkCall}
-									onClick={handleLoginWithTestCredentials}
-								/>
-							</div>
-							<Link
-								to="/signup"
-								className={`btn btn-link btn-primary mt-0-75 flex-row flex-justify-center flex-align-center ${
-									isOngoingNetworkCall && "link-disabled"
-								}`}
-							>
+						<p className="text-center text-sm text-surface-600">
+							<Link to="/signup" className="font-medium text-surface-800 hover:underline">
 								Create a new account
-								<span className="icon mui-icon icon-chevron-right">
-									<ChevronRightIcon />
-								</span>
 							</Link>
-						</div>
+						</p>
 					</form>
-				</section>
+				</div>
 			</div>
-		</section>
+		</main>
 	);
 };
 

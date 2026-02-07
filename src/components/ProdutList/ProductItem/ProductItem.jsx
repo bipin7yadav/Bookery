@@ -1,28 +1,21 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
 import { useCart, useAuth, useWishList } from "contexts";
 import { getSellingPrice } from "utils/";
 import { postToCart, postToWishList, deleteProductInWishList } from "services";
 import { useToast } from "custom-hooks";
+import { Button, Badge } from "components/ui";
 
 const ProductItem = ({ book }) => {
-	const {
-		cartState: { cartItems },
-		cartDispatch,
-	} = useCart();
-	const {
-		wishListState: { wishListItems },
-		wishListDispatch,
-	} = useWishList();
-	const {
-		authState: { token, isAuth },
-	} = useAuth();
+	const { cartState: { cartItems }, cartDispatch } = useCart();
+	const { wishListState: { wishListItems }, wishListDispatch } = useWishList();
+	const { authState: { token, isAuth } } = useAuth();
 	const { showToast } = useToast();
+	const navigate = useNavigate();
+	const [loading, setLoading] = useState(false);
+
 	const bookInCart = cartItems?.find((item) => item._id === book._id);
 	const bookInWishList = wishListItems?.find((item) => item._id === book._id);
-	const navigate = useNavigate();
-	const [isOngoingNetworkCall, setIsOngoingNetworkCall] = useState(false);
 
 	const {
 		author,
@@ -31,7 +24,6 @@ const ProductItem = ({ book }) => {
 		discountPercent,
 		genres,
 		_id,
-		id,
 		offers,
 		originalPrice,
 		title,
@@ -41,231 +33,139 @@ const ProductItem = ({ book }) => {
 	} = book;
 
 	const sellingPrice = getSellingPrice(originalPrice, discountPercent);
-
 	const outOfStock = !inStock;
-
-	const localeOriginalPrice = originalPrice.toLocaleString("en-IN", {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	});
-	const localeSellingPrice = sellingPrice.toLocaleString("en-IN", {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	});
-
+	const localeOriginalPrice = originalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	const localeSellingPrice = sellingPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 	const localeTotalRatings = totalRatings.toLocaleString("en-IN");
 
-	const genreMapping = genres.map((genre) => (
-		<li
-			key={`${_id}-${genre}`}
-			className="badge text-xs badge-secondary text-xs p-0-25 px-0-5 genre-item"
-		>
-			{genre}
-		</li>
-	));
-
-	const productBadge =
-		bookType === "Hardcover" ? (
-			<span className="badge badge-secondary my-0-5 text-sm px-0-75">
-				{bookType}
-			</span>
-		) : offers.filter((offer) => offer.isOffer)?.length ? (
-			<h6 className="badge badge-secondary my-0-5 text-sm px-0-75">
-				{offers.filter((offer) => offer.isOffer)[0].offerText}
-			</h6>
-		) : null;
+	const badgeLabel =
+		bookType === "Hardcover"
+			? bookType
+			: offers?.filter((o) => o.isOffer)?.[0]?.offerText;
 
 	const handleAddToCart = async (e) => {
-		if (outOfStock) return;
-
 		e.preventDefault();
 		e.stopPropagation();
-
-		setIsOngoingNetworkCall(true);
-
+		if (outOfStock) return;
+		setLoading(true);
 		if (!isAuth) {
-			return navigate("/login", { state: { from: "/products" } });
+			navigate("/login", { state: { from: "/products" } });
+			setLoading(false);
+			return;
 		}
-
 		if (bookInCart) {
 			navigate("/cart");
-		} else {
-			try {
-				const {
-					data: { cart },
-				} = await postToCart(book, token);
-
-				showToast("Item added to cart", "success");
-				cartDispatch({
-					type: "SET_CART_ITEMS",
-					payload: {
-						cartItems: cart,
-						error: null,
-						loading: false,
-					},
-				});
-				setIsOngoingNetworkCall(false);
-			} catch (error) {
-				showToast(
-					"Failed to add item to cart. Please try again later.",
-					"error"
-				);
-				setIsOngoingNetworkCall(false);
-			}
+			setLoading(false);
+			return;
 		}
+		try {
+			const { data: { cart } } = await postToCart(book, token);
+			showToast("Item added to cart", "success");
+			cartDispatch({ type: "SET_CART_ITEMS", payload: { cartItems: cart, error: null, loading: false } });
+		} catch {
+			showToast("Failed to add item to cart. Please try again later.", "error");
+		}
+		setLoading(false);
 	};
 
-	const handleAddToWishList = async (e) => {
-		if (outOfStock) return;
-
+	const handleWishlist = async (e) => {
 		e.preventDefault();
 		e.stopPropagation();
-		setIsOngoingNetworkCall(true);
-
+		if (outOfStock) return;
+		setLoading(true);
 		if (!isAuth) {
-			return navigate("/login", { state: { from: "/products" } });
+			navigate("/login", { state: { from: "/products" } });
+			setLoading(false);
+			return;
 		}
-
-		if (bookInWishList) {
-			try {
-				const {
-					data: { wishlist },
-				} = await deleteProductInWishList(_id, token);
-
-				showToast("Item removed from wishlist", "success");
-				setIsOngoingNetworkCall(false);
-
-				wishListDispatch({
-					type: "ADD_TO_WISHLIST",
-					payload: {
-						wishListItems: wishlist,
-						error: false,
-						loading: false,
-					},
-				});
-			} catch (error) {
-				showToast(
-					"Failed to remove item from wishlist. Please try again later.",
-					"error"
-				);
-				setIsOngoingNetworkCall(false);
-			}
-		} else {
-			try {
-				const {
-					data: { wishlist },
-				} = await postToWishList(book, token);
-
-				showToast("Item added to wishlist", "success");
-				wishListDispatch({
-					type: "ADD_TO_WISHLIST",
-					payload: {
-						wishListItems: wishlist,
-						error: false,
-						loading: false,
-					},
-				});
-				setIsOngoingNetworkCall(false);
-			} catch (error) {
-				showToast(
-					"Failed to add item to wishlist. Please try again later.",
-					"error"
-				);
-				setIsOngoingNetworkCall(false);
-			}
+		try {
+			const { data: { wishlist } } = bookInWishList
+				? await deleteProductInWishList(_id, token)
+				: await postToWishList(book, token);
+			wishListDispatch({ type: "ADD_TO_WISHLIST", payload: { wishListItems: wishlist, error: false, loading: false } });
+			showToast(bookInWishList ? "Removed from wishlist" : "Added to wishlist", "success");
+		} catch {
+			showToast("Failed to update wishlist. Please try again later.", "error");
 		}
+		setLoading(false);
 	};
 
 	return (
 		<Link
 			to={`/products/${_id}`}
-			className={`product-card card card-vertical card-wt-dismiss card-wt-badge ${
-				outOfStock ? "out-of-stock" : "in-stock"
-			} ${isOngoingNetworkCall ? "link-disabled" : "link"}
-			}`}
+			className={`group relative block min-w-0 overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card transition-all duration-200 hover:shadow-cardHover hover:border-surface-300 ${outOfStock ? "opacity-70" : ""} ${loading ? "pointer-events-none" : ""}`}
 		>
-			<div id={_id}></div>
-			{productBadge ?? productBadge}
+			{badgeLabel && (
+				<div className="absolute left-3 top-3 z-10">
+					<Badge variant="primary">{badgeLabel}</Badge>
+				</div>
+			)}
 			<button
-				className={`btn btn-primary btn-icon btn-dismiss btn-card-wishlist m-0-5 flex--col flex-align-center flex-justify-center ${
-					isOngoingNetworkCall || outOfStock ? "btn-disabled" : ""
-				}`}
-				onClick={handleAddToWishList}
-				disabled={isOngoingNetworkCall}
+				type="button"
+				className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 text-surface-600 shadow-soft transition-colors hover:bg-white hover:text-surface-800"
+				onClick={handleWishlist}
+				disabled={loading || outOfStock}
+				aria-label={bookInWishList ? "Remove from wishlist" : "Add to wishlist"}
 			>
-				<span className="icon flex-col flex-align-center flex-justify-center">
-					{bookInWishList ? (
-						<i className="fa-solid fa-heart text-reg"></i>
-					) : (
-						<i className="fa-regular fa-heart text-reg"></i>
-					)}
-				</span>
+				<i className={`fa-${bookInWishList ? "solid" : "regular"} fa-heart`} />
 			</button>
 
-			{outOfStock ? (
-				<div className="container-out-of-stock py-0-25 px-0-5 text-center text-sm">
-					Out of Stock
-				</div>
-			) : null}
-
-			<div className="card-header p-0-75">
-				<img src={coverImg} alt={title} />
-				<div className="rating-container rating-badge m-1 px-0-75">
-					<span className="rating-value flex-row flex-align-center flex-justify-center text-xs">
-						{totalStars}
-						<i className="fa-solid fa-star star-icon ml-0-25 mr-0-5 success-color flex-col flex-justify-center flex-align-center"></i>
-						|
-						<span className="ml-0-5 rating-count">
-							{localeTotalRatings}
-						</span>
+			{outOfStock && (
+				<div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
+					<span className="rounded-lg bg-surface-800 px-3 py-1.5 text-2xs font-medium text-white">
+						Out of Stock
 					</span>
 				</div>
+			)}
+
+			<div className="aspect-[3/4] overflow-hidden bg-surface-100">
+				<img
+					src={coverImg}
+					alt={title}
+					className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+				/>
 			</div>
-			<div className="card-body px-0-75">
-				<div className="card-description my-0-25">
-					<h6 className="text-reg card-title">{title}</h6>
-					<p className="mt-0-25 text-xs card-subtitle">{author}</p>
+
+			<div className="p-4">
+				<div className="mb-1 flex items-center gap-1.5 text-2xs text-surface-500">
+					<span className="font-medium text-surface-700">{totalStars}</span>
+					<i className="fa-solid fa-star text-amber-500" />
+					<span>|</span>
+					<span>{localeTotalRatings} ratings</span>
 				</div>
-				<div className="card-content my-1">
-					<div className="card-price flex-row flex-align-start flex-justify-between">
-						<div className="discounted-price flex-col">
-							<p className="price-discounted text-sm">
-								₹ {localeSellingPrice}
-							</p>
-							<span className="success-color percentage-discount text-sm">
-								{discountPercent} %
-							</span>
-						</div>
-						<p className="price-original">
-							<span className="text-linethrough error-color text-sm">
-								₹ {localeOriginalPrice}
-							</span>
-						</p>
+				<h3 className="font-medium text-surface-900 line-clamp-2">{title}</h3>
+				<p className="mt-0.5 text-sm text-surface-500">{author}</p>
+				<div className="mt-3 flex items-center justify-between gap-2">
+					<div>
+						<p className="text-sm font-semibold text-surface-900">₹ {localeSellingPrice}</p>
+						<p className="text-2xs text-surface-400 line-through">₹ {localeOriginalPrice}</p>
 					</div>
-					<div className="card-genres">
-						<ul className="list list-inline list-style-none mt-1-5 flex-row flex-wrap flex-justify-start">
-							{genreMapping}
-						</ul>
-					</div>
+					{discountPercent > 0 && (
+						<Badge variant="success">{discountPercent}% off</Badge>
+					)}
 				</div>
+				{genres?.length > 0 && (
+					<div className="mt-2 flex flex-wrap gap-1">
+						{genres.slice(0, 2).map((g) => (
+							<Badge key={g} variant="default" className="text-2xs">
+								{g}
+							</Badge>
+						))}
+					</div>
+				)}
 			</div>
-			<div className="card-footer mt-1 mb-0-75 text-sm py-0-25 px-0-75">
-				<button
-					className={`btn btn-primary btn-text-icon btn-full-width p-0-25 ${
-						isOngoingNetworkCall || outOfStock ? "btn-disabled" : ""
-					}`}
-					disabled={isOngoingNetworkCall}
+
+			<div className="border-t border-surface-100 p-4">
+				<Button
+					variant="primary"
+					size="md"
+					fullWidth
+					disabled={loading || outOfStock}
 					onClick={handleAddToCart}
 				>
-					{bookInCart ? (
-						<span>Go to Cart</span>
-					) : (
-						<span>Add to Cart</span>
-					)}
-					<span className="icon">
-						<i className="fa-solid fa-cart-shopping"></i>
-					</span>
-				</button>
+					{bookInCart ? "Go to Cart" : "Add to Cart"}
+					<i className="fa-solid fa-cart-shopping ml-1 text-sm" />
+				</Button>
 			</div>
 		</Link>
 	);

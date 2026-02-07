@@ -5,35 +5,20 @@ const SortingOptionsItem = ({
 	option,
 	value,
 	sortBy,
-}) => {
-	return (
-		<li className="list-item m-0-5">
-			<label
-				htmlFor={option}
-				className="text-sm rating-label flex-row flex-align-center"
-			>
-				<input
-					type="radio"
-					className="input-radio"
-					value={value}
-					id={option}
-					name="product-sort"
-					onChange={handleChangeSortingOption}
-					checked={sortBy === value}
-				/>
-				<span className="genre-text">{option}</span>
-			</label>
-		</li>
-	);
-};
-
-/*
-<li className={`sorting-option ${sortBy === value && "border-bottom"}`}>
-            <button className="btn btn-link" onClick={handleChangeSortingOption} value={value}>
-                { option }
-            </button>
-        </li>
-
-*/
+}) => (
+	<li>
+		<label className="flex cursor-pointer items-center gap-3 rounded-lg py-2 px-2 hover:bg-surface-50">
+			<input
+				type="radio"
+				value={value}
+				name="product-sort"
+				onChange={handleChangeSortingOption}
+				checked={sortBy === value}
+				className="h-4 w-4 border-surface-300 text-surface-800 focus:ring-accent-500"
+			/>
+			<span className="text-sm text-surface-700">{option}</span>
+		</label>
+	</li>
+);
 
 export { SortingOptionsItem };
