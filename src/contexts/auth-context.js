@@ -19,12 +19,12 @@ const { Provider } = AuthContext;
 
 const AuthProvider = ({ children }) => {
 	const setInitialState = () => {
-		const bookeryToken = localStorage.getItem("bookery-token");
-		if (bookeryToken) {
+		const booknookToken = localStorage.getItem("booknook-token");
+		if (booknookToken) {
 			return {
-				token: bookeryToken,
+				token: booknookToken,
 				isAuth: true,
-				user: JSON.parse(localStorage.getItem("bookery-user")),
+				user: JSON.parse(localStorage.getItem("booknook-user")),
 			};
 		}
 		return initialAuthState;
@@ -38,8 +38,8 @@ const AuthProvider = ({ children }) => {
 	const { wishListDispatch } = useWishList();
 
 	const logoutUser = () => {
-		localStorage.removeItem("bookery-token");
-		localStorage.removeItem("bookery-user");
+		localStorage.removeItem("booknook-token");
+		localStorage.removeItem("booknook-user");
 		setAuthState({ ...initialAuthState });
 		addressDispatch({
 			type: "SET_ADDRESSES",

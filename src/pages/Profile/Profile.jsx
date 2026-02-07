@@ -1,61 +1,49 @@
 import React, { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { v4 as uuid } from "uuid";
-
 import { useDocumentTitle } from "custom-hooks";
-import ProfileCSS from "./Profile.module.css";
+
+const tabs = [
+	{ _id: uuid(), label: "Profile", to: "/profile" },
+	{ _id: uuid(), label: "Address", to: "/profile/address" },
+	{ _id: uuid(), label: "Orders", to: "/profile/orders" },
+];
 
 const Profile = () => {
-	const { profileTabItem, activeLink, tabName, tabsWrapper, profileMain } =
-		ProfileCSS;
-
-	const tabs = [
-		{
-			_id: uuid(),
-			tabName: "Profile",
-			linkTo: "/profile",
-		},
-		{
-			_id: uuid(),
-			tabName: "Address",
-			linkTo: "/profile/address",
-		},
-		{
-			_id: uuid(),
-			tabName: "Orders",
-			linkTo: "/profile/orders",
-		},
-	];
-
 	const { setDocumentTitle } = useDocumentTitle();
 
 	useEffect(() => {
-		setDocumentTitle("Bookery | Profile");
-	}, []);
-
-	const getActiveClass = ({ isActive }) =>
-		isActive
-			? `${profileTabItem} ${activeLink} text-center mx-auto`
-			: `${profileTabItem} text-center mx-auto`;
-
-	const tabsMapping = tabs.map((tab) => (
-		<NavLink end key={tab._id} to={tab.linkTo} className={getActiveClass}>
-			<h5 className={`${tabName} mx-auto`}>{tab.tabName}</h5>
-		</NavLink>
-	));
+		setDocumentTitle("Booknook | Profile");
+	}, [setDocumentTitle]);
 
 	return (
-		<main className={`main ${profileMain} my-2 mx-auto px-3 py-2`}>
-			<section
-				className={`flex-col flex-align-center p-2 flex-justify-center text-center`}
-			>
-				<div
-					className={`${tabsWrapper} pb-2 tabs-wrapper flex-row flex-align-center flex-justify-center`}
-				>
-					{tabsMapping}
+		<main className="main-content page-section">
+			<div className="page-container max-w-4xl min-w-0">
+				<nav className="mb-6 border-b border-surface-200 sm:mb-8 overflow-x-auto">
+					<ul className="flex flex-wrap gap-1 min-w-0">
+						{tabs.map((tab) => (
+							<li key={tab._id}>
+								<NavLink
+									end={tab.to === "/profile"}
+									to={tab.to}
+									className={({ isActive }) =>
+										`block border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+											isActive
+												? "border-surface-800 text-surface-900"
+												: "border-transparent text-surface-600 hover:text-surface-800"
+										}`
+									}
+								>
+									{tab.label}
+								</NavLink>
+							</li>
+						))}
+					</ul>
+				</nav>
+				<div className="rounded-2xl border border-surface-200 bg-white p-4 shadow-card sm:p-6 lg:p-8 min-w-0">
+					<Outlet />
 				</div>
-				<Outlet />
-			</section>
+			</div>
 		</main>
 	);
 };

@@ -1,121 +1,73 @@
 import React from "react";
 import { Link } from "react-router-dom";
-
 import { AddressItem } from "pages";
 import { getSellingPrice } from "utils";
 
 const OrderItem = ({ order, page }) => {
-	const { orderId, price, selectedCoupon, createdAt, items, address } = order;
-	const getFormattedPrice = (price) =>
-		price.toLocaleString("en-IN", {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		});
+	const { orderId, price, selectedCoupon, createdAt, items, address } = order || {};
 
-	const getFormattedSellingPrice = (originalPrice, discountPercent) => {
-		const sellingPrice = getSellingPrice(originalPrice, discountPercent);
+	const formatPrice = (p) =>
+		Number(p).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	const sellingPrice = (orig, discount) => formatPrice(getSellingPrice(orig, discount));
 
-		return getFormattedPrice(sellingPrice);
-	};
+	if (!order || !Object.keys(order).length) {
+		return (
+			<div className="rounded-2xl border border-surface-200 bg-white p-8 text-center shadow-card">
+				<h4 className="text-surface-700">Order not found</h4>
+				<Link
+					to="/products"
+					className="mt-4 inline-block text-sm font-medium text-surface-800 underline hover:no-underline"
+				>
+					Shop more
+				</Link>
+			</div>
+		);
+	}
 
 	return (
 		<section
-			className={`order-wrapper mx-auto ${
-				page === "orders" ? "border-bottom py-3" : "border-none"
+			className={`rounded-2xl border border-surface-200 bg-white p-6 shadow-card ${
+				page === "orders" ? "mb-6" : ""
 			}`}
 		>
-			{Object.keys(order)?.length ? (
-				<div className="order-details mx-auto text-left">
-					<div className="order-summary p-0-75 flex-col flex-align-start flex-justify-start">
-						<div className="order-id flex-row flex-align-start flex-justify-start">
-							<h6 className="text-reg">Order Id:</h6>
-							<p>{orderId}</p>
-						</div>
-
-						<div className="order-total flex-row">
-							<h6 className="text-reg order-total-head">
-								Order Total:
-							</h6>
-							<p>₹ {getFormattedPrice(price)}</p>
-						</div>
-						{selectedCoupon ? (
-							<div className="selected-coupon flex-row">
-								<h6 className="text-reg order-total-head">
-									Discount Applied:
-								</h6>
-								<p>{selectedCoupon?.discount}%</p>
-							</div>
-						) : null}
-						<div className="order-total flex-row">
-							<h6 className="text-reg order-date-head">
-								Order Date:
-							</h6>
-							<p>{new Date(createdAt).toLocaleString()}</p>
-						</div>
-						<div className="shipping-address">
-							<h6 className="text-reg shipping-address-head">
-								Ship to
-							</h6>
-							<AddressItem
-								address={address}
-								page={"orderSummary"}
-							/>
-						</div>
-					</div>
-					<div className="order-items flex-col flex-justify-start flex-align-center">
-						{items.map((item) => (
-							<Link
-								to={`/products/${item?._id}`}
-								className="item card card-horizontal p-0-75"
-								key={item?.id}
-							>
-								<div className="card-description flex-col flex-align-start flex-justify-center">
-									<div className="flex-col mb-0-75">
-										<h6 className="text-reg">
-											{item?.title}
-										</h6>
-										<h6 className="text-xs gray-color">
-											{item?.author}
-										</h6>
-									</div>
-									<p className="text-sm flex-row">
-										<span>Quantity:</span>
-										<span>{item?.qty}</span>
-									</p>
-									<p className="text-sm flex-row">
-										<span>Item Price:</span>
-										<span>
-											₹
-											<span>
-												{getFormattedSellingPrice(
-													item?.originalPrice,
-													item?.discountPercent
-												)}
-											</span>
-										</span>
-									</p>
-								</div>
-								<div className="card-header">
-									<img
-										src={item?.coverImg}
-										alt={`${item?.title} cover`}
-									/>
-								</div>
-							</Link>
-						))}
-					</div>
+			<div className="space-y-4">
+				<div className="flex flex-wrap justify-between gap-2 border-b border-surface-100 pb-4">
+					<p className="text-sm font-medium text-surface-700">Order ID: {orderId}</p>
+					<p className="text-sm font-semibold text-surface-900">₹ {formatPrice(price)}</p>
 				</div>
-			) : (
-				<div className="text-center mt-2">
-					<h4>Order not found!</h4>
+				{selectedCoupon && (
+					<p className="text-2xs text-surface-500">Discount applied: {selectedCoupon.discount}%</p>
+				)}
+				<p className="text-2xs text-surface-500">
+					Order date: {new Date(createdAt).toLocaleString()}
+				</p>
+				<div>
+					<p className="mb-2 text-xs font-semibold uppercase tracking-wider text-surface-500">
+						Ship to
+					</p>
+					<AddressItem address={address} page="orderSummary" />
+				</div>
+			</div>
+			<div className="mt-6 space-y-3">
+				{items?.map((item) => (
 					<Link
-						to="/products"
-						className="btn btn-primary p-0-25 mx-auto mt-1"
+						key={item?.id}
+						to={`/products/${item?._id}`}
+						className="flex gap-4 rounded-xl border border-surface-200 p-3 transition-colors hover:bg-surface-50"
 					>
-						Shop more!
+						<div className="h-20 w-14 shrink-0 overflow-hidden rounded-lg bg-surface-100">
+							<img src={item?.coverImg} alt="" className="h-full w-full object-cover" />
+						</div>
+						<div className="min-w-0 flex-1">
+							<p className="font-medium text-surface-900">{item?.title}</p>
+							<p className="text-sm text-surface-500">{item?.author}</p>
+							<p className="text-2xs text-surface-500">
+								Qty: {item?.qty} · ₹ {sellingPrice(item?.originalPrice, item?.discountPercent)}
+							</p>
+						</div>
 					</Link>
-				</div>
-			)}
+				))}
+			</div>
 		</section>
 	);
 };

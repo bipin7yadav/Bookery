@@ -1,3 +1,4 @@
+export * from "./ui";
 export { Filters } from "./Filters/Filters";
 export { Footer } from "./Footer/Footer";
 export { Header } from "./Header/Header";

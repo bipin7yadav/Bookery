@@ -1,37 +1,29 @@
 import React from "react";
-
 import { useFilter } from "contexts/";
 
 const GenreFilterOption = ({ categoryName }) => {
-	const {
-		filterState: { genres },
-		filterDispatch,
-	} = useFilter();
+	const { filterState: { genres }, filterDispatch } = useFilter();
+	const checked = genres?.[categoryName] ?? false;
 
-	const isGenreChecked = genres[categoryName];
-
-	const handleGenreChange = (event) => {
+	const handleChange = (e) => {
 		filterDispatch({
 			filterType: "FILTER_BY_GENRE",
-			filterPayload: event.target.value,
+			filterPayload: e.target.value,
 		});
 	};
 
 	return (
-		<li className="list-item mt-0-25 p-0-25">
-			<label
-				htmlFor={`genre-${categoryName}`}
-				className="text-sm genre-label flex-row flex-align-center"
-			>
+		<li>
+			<label className="flex cursor-pointer items-center gap-3 rounded-lg py-2 px-2 hover:bg-surface-50">
 				<input
 					type="checkbox"
-					className="input-checkbox"
 					value={categoryName}
 					id={`genre-${categoryName}`}
-					onChange={handleGenreChange}
-					checked={isGenreChecked}
+					onChange={handleChange}
+					checked={checked}
+					className="h-4 w-4 rounded border-surface-300 text-surface-800 focus:ring-accent-500"
 				/>
-				<span className="genre-text">{categoryName}</span>
+				<span className="text-sm text-surface-700">{categoryName}</span>
 			</label>
 		</li>
 	);

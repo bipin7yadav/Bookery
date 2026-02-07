@@ -1,37 +1,29 @@
 import React from "react";
-
 import { useFilter } from "contexts/";
 
 const BookTypeFilterOption = ({ bookTypeFilter }) => {
-	const {
-		filterState: { bookType },
-		filterDispatch,
-	} = useFilter();
+	const { filterState: { bookType }, filterDispatch } = useFilter();
+	const checked = bookType?.[bookTypeFilter] ?? false;
 
-	const isBookTypeChecked = bookType[bookTypeFilter];
-
-	const handleBookTypeChange = (event) => {
+	const handleChange = (e) => {
 		filterDispatch({
 			filterType: "FILTER_BY_BOOK_TYPE",
-			filterPayload: event.target.value,
+			filterPayload: e.target.value,
 		});
 	};
 
 	return (
-		<li className="list-item mt-0-75 mb-0-5">
-			<label
-				htmlFor={`cover-${bookTypeFilter}`}
-				className="text-sm book-cover-label flex-row flex-align-center"
-			>
+		<li>
+			<label className="flex cursor-pointer items-center gap-3 rounded-lg py-2 px-2 hover:bg-surface-50">
 				<input
 					type="checkbox"
 					value={bookTypeFilter}
-					className="input-checkbox"
 					id={`cover-${bookTypeFilter}`}
-					onChange={handleBookTypeChange}
-					checked={isBookTypeChecked}
+					onChange={handleChange}
+					checked={checked}
+					className="h-4 w-4 rounded border-surface-300 text-surface-800 focus:ring-accent-500"
 				/>
-				<span className="genre-text">{bookTypeFilter}</span>
+				<span className="text-sm text-surface-700">{bookTypeFilter}</span>
 			</label>
 		</li>
 	);

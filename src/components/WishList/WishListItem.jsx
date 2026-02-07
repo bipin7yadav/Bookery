@@ -1,172 +1,95 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { ShoppingCart } from "@mui/icons-material";
-
 import { useAuth, useCart, useWishList } from "contexts";
 import { useToast, useUpdateCart } from "custom-hooks/";
 import { getSellingPrice } from "utils";
 import { postToCart, deleteProductInWishList } from "services";
+import { Button } from "components/ui";
 
 const WishListItem = ({ wishListItem }) => {
-	const [isOngoingNetworkCall, setIsOngoingNetworkCall] = useState(false);
-
-	const { _id, author, title, coverImg, discountPercent, originalPrice } =
-		wishListItem;
-
+	const [loading, setLoading] = useState(false);
+	const { _id, author, title, coverImg, discountPercent, originalPrice } = wishListItem;
 	const sellingPrice = getSellingPrice(originalPrice, discountPercent);
+	const localeSellingPrice = sellingPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	const localeOriginalPrice = originalPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-	const localeSellingPrice = sellingPrice.toLocaleString("en-IN", {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	});
-	const localeOriginalPrice = originalPrice.toLocaleString("en-IN", {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	});
-
-	const {
-		authState: { token },
-	} = useAuth();
+	const { authState: { token } } = useAuth();
 	const { showToast } = useToast();
 	const { wishListDispatch } = useWishList();
-	const {
-		cartState: { cartItems },
-		cartDispatch,
-	} = useCart();
+	const { cartState: { cartItems }, cartDispatch } = useCart();
 	const { callUpdateProductInCart } = useUpdateCart();
 
-	const handleRemoveFromWishList = async (
-		showToastAfterRemovingItem = true
-	) => {
-		setIsOngoingNetworkCall(true);
+	const handleRemove = async (showMsg = true) => {
+		setLoading(true);
 		try {
-			const {
-				data: { wishlist },
-			} = await deleteProductInWishList(_id, token);
-
-			setIsOngoingNetworkCall(false);
-			if (showToastAfterRemovingItem)
-				showToast("Item removed from wishlist", "success");
-
-			wishListDispatch({
-				type: "ADD_TO_WISHLIST",
-				payload: {
-					wishListItems: wishlist,
-					error: false,
-					loading: false,
-				},
-			});
-		} catch (error) {
-			setIsOngoingNetworkCall(false);
-			showToast(
-				"Failed to remove item from wishlist. Please try again later.",
-				"error"
-			);
+			const { data: { wishlist } } = await deleteProductInWishList(_id, token);
+			wishListDispatch({ type: "ADD_TO_WISHLIST", payload: { wishListItems: wishlist, error: false, loading: false } });
+			if (showMsg) showToast("Removed from wishlist", "success");
+		} catch {
+			showToast("Failed to remove. Try again.", "error");
+			setLoading(false);
 		}
 	};
 
 	const handleMoveToCart = async () => {
-		setIsOngoingNetworkCall(true);
-		const isItemAlreadyInCart = cartItems.find((item) => item._id === _id);
-
-		if (isItemAlreadyInCart) {
-			const itemMovedToCart = await callUpdateProductInCart(
-				_id,
-				"increment",
-				false
-			);
-
-			if (itemMovedToCart) {
-				handleRemoveFromWishList(false);
-				showToast("Item moved to cart", "success");
+		setLoading(true);
+		const inCart = cartItems?.find((item) => item._id === _id);
+		if (inCart) {
+			const ok = await callUpdateProductInCart(_id, "increment", false);
+			if (ok) {
+				handleRemove(false);
+				showToast("Moved to cart", "success");
 			} else {
-				showToast(
-					"Failed to move item to cart. Please try again later.",
-					"error"
-				);
+				showToast("Failed to update cart.", "error");
 			}
-		} else {
-			try {
-				const {
-					data: { cart },
-				} = await postToCart(wishListItem, token);
-
-				showToast("Item moved to cart", "success");
-
-				cartDispatch({
-					type: "SET_CART_ITEMS",
-					payload: {
-						cartItems: cart,
-						error: null,
-						loading: false,
-					},
-				});
-				handleRemoveFromWishList(false);
-			} catch (error) {
-				showToast(
-					"Failed to move item to cart. Please try again later.",
-					"error"
-				);
-				setIsOngoingNetworkCall(false);
-			}
+			setLoading(false);
+			return;
+		}
+		try {
+			const { data: { cart } } = await postToCart(wishListItem, token);
+			cartDispatch({ type: "SET_CART_ITEMS", payload: { cartItems: cart, error: null, loading: false } });
+			handleRemove(false);
+			showToast("Moved to cart", "success");
+		} catch {
+			showToast("Failed to add to cart.", "error");
+			setLoading(false);
 		}
 	};
 
 	return (
-		<article
-			className="product-card card card-vertical card-wt-dismiss card-wt-badge"
-			id={_id}
-		>
-			<button
-				className={`btn btn-primary btn-icon btn-dismiss btn-card-wishlist m-0-5 flex--col flex-align-center flex-justify-center ${
-					isOngoingNetworkCall ? "btn-disabled" : ""
-				}`}
-				disabled={isOngoingNetworkCall}
-				onClick={() => handleRemoveFromWishList()}
-			>
-				<span className="icon flex-col flex-align-center flex-justify-center">
-					<i className="fa-solid fa-heart text-reg"></i>
-				</span>
-			</button>
-
-			<div className="card-header p-1">
-				<img src={coverImg} alt={title} />
-			</div>
-
-			<div className="card-body px-0-75 w-100 text-center">
-				<div className="card-description my-0-25">
-					<h6 className="text-reg card-title">{title}</h6>
-					<p className="mt-0-25 text-sm card-subtitle">{author}</p>
+		<article className="overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card transition-shadow hover:shadow-cardHover">
+			<Link to={`/products/${_id}`} className="block">
+				<div className="aspect-[3/4] overflow-hidden bg-surface-100">
+					<img src={coverImg} alt={title} className="h-full w-full object-cover" />
 				</div>
-
-				<div className="card-content my-1 text-center">
-					<div className="card-price flex-row flex-align-center flex-justify-evenly">
-						<p className="price-discounted">
-							₹ {localeSellingPrice}
-						</p>
-						<p className="price-original text-linethrough error-color text-sm">
-							₹ {localeOriginalPrice}
-						</p>
-						<p className="price-discounted-percentage success-color percentage-discount text-sm">
-							Save {discountPercent} %
-						</p>
+				<div className="p-4">
+					<h3 className="font-medium text-surface-900 line-clamp-2">{title}</h3>
+					<p className="mt-0.5 text-sm text-surface-500">{author}</p>
+					<div className="mt-3 flex items-center gap-2">
+						<p className="font-semibold text-surface-900">₹ {localeSellingPrice}</p>
+						<p className="text-sm text-surface-400 line-through">₹ {localeOriginalPrice}</p>
 					</div>
+					<p className="text-2xs text-success">Save {discountPercent}%</p>
 				</div>
-			</div>
-			<div className="card-footer mt-1 mb-0-75  px-0-75">
+			</Link>
+			<div className="flex gap-2 border-t border-surface-100 p-4">
 				<button
-					className={`btn btn-primary btn-text-icon btn-full-width p-0-25 ${
-						isOngoingNetworkCall ? "btn-disabled" : ""
-					}`}
-					disabled={isOngoingNetworkCall}
-					onClick={handleMoveToCart}
+					type="button"
+					className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-surface-200 text-surface-600 hover:bg-surface-50"
+					onClick={(e) => { e.preventDefault(); handleRemove(); }}
+					disabled={loading}
+					aria-label="Remove from wishlist"
 				>
-					Move To Cart
-					<span className="icon">
-						<ShoppingCart />
-					</span>
+					<i className="fa-solid fa-heart text-sm" />
 				</button>
+				<Button variant="primary" size="md" className="flex-1" disabled={loading} onClick={(e) => { e.preventDefault(); handleMoveToCart(); }}>
+					Move to cart
+					<ShoppingCart className="ml-1" fontSize="small" />
+				</Button>
 			</div>
 		</article>
 	);
 };
+
 export { WishListItem };

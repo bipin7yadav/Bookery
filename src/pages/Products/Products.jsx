@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-
 import { useProduct, useFilter } from "contexts/";
 import { Filters, ProductList } from "components/";
 import { useDocumentTitle, useMedia } from "custom-hooks";
-import loadingImage from "assets/images/loader.svg";
-import "./products.css";
+import { LoadingSpinner } from "components/ui";
 
 const Products = () => {
 	const {
@@ -14,83 +12,70 @@ const Products = () => {
 	} = useProduct();
 	const location = useLocation();
 	const { filterDispatch } = useFilter();
-
 	const [showFilterDrawer, setShowFilterDrawer] = useState(false);
-	const doesMediaQueryMatches = useMedia("(min-width: 641px)");
+	const isDesktop = useMedia("(min-width: 641px)");
 
 	const { setDocumentTitle } = useDocumentTitle();
 
 	useEffect(() => {
-		setDocumentTitle("Bookery | Products");
-	}, []);
+		setDocumentTitle("Booknook | Products");
+	}, [setDocumentTitle]);
 
 	useEffect(() => {
 		const categoryName = location?.state;
-		categoryName &&
+		if (categoryName) {
 			filterDispatch({
 				filterType: "SET_CATEGORIES",
 				filterPayload: categoryName,
 			});
-	}, [location?.state]);
+		}
+	}, [location?.state, filterDispatch]);
 
 	useEffect(() => {
-		if (doesMediaQueryMatches && showFilterDrawer) {
+		if (isDesktop && showFilterDrawer) {
 			document.body.style.overflowY = "scroll";
 			setShowFilterDrawer(false);
-		} else if (!doesMediaQueryMatches && showFilterDrawer) {
+		} else if (!isDesktop && showFilterDrawer) {
 			document.body.style.overflowY = "hidden";
-		} else if (!doesMediaQueryMatches && !showFilterDrawer) {
+		} else if (!isDesktop && !showFilterDrawer) {
 			document.body.style.overflowY = "scroll";
 		}
-	}, [showFilterDrawer, doesMediaQueryMatches]);
-
-	const handleChangeShowFilterDrawer = (isShown) => {
-		setShowFilterDrawer(isShown);
-	};
+	}, [showFilterDrawer, isDesktop]);
 
 	return (
-		<main className="main products-main my-2 mx-auto py-2 px-3 grid grid-2">
-			{loading ? (
-				<img
-					src={loadingImage}
-					alt="Loading svg"
-					className="img img-responsive mx-auto loader-img"
-				/>
-			) : error ? (
-				<h1 className="error text error-color my-2 text-center loader-error">
-					{error}
-				</h1>
-			) : (
-				<>
-					<div className="filters-wrapper py-1-5 px-1">
+		<main className="main-content page-section">
+			<div className="page-container">
+				{loading ? (
+					<LoadingSpinner className="min-h-[40vh]" />
+				) : error ? (
+					<p className="py-12 text-center text-error">{error}</p>
+				) : (
+					<div className="flex flex-col gap-8 lg:flex-row">
 						<Filters
-							handleChangeShowFilterDrawer={
-								handleChangeShowFilterDrawer
-							}
+							handleChangeShowFilterDrawer={setShowFilterDrawer}
 							showFilterDrawer={showFilterDrawer}
 						/>
-						<div className="mobile-filters flex-row flex-align-center flex-justify-between py-0-75 px-1">
-							<h5>Filters</h5>
-							<button
-								className="btn btn-primary btn-icon"
-								onClick={() =>
-									handleChangeShowFilterDrawer(true)
-								}
-							>
-								<i className="fa-solid fa-sliders fa-icon"></i>
-							</button>
+						<div className="flex-1">
+							<div className="mb-6 flex items-center justify-between">
+								<h1 className="text-xl font-semibold text-surface-900">
+									Products
+								</h1>
+								{!isDesktop && (
+									<button
+										type="button"
+										onClick={() => setShowFilterDrawer(true)}
+										className="flex h-10 items-center gap-2 rounded-xl border border-surface-200 bg-white px-4 text-sm font-medium text-surface-700 shadow-soft hover:bg-surface-50"
+									>
+										<i className="fa-solid fa-sliders text-surface-500" />
+										Filters
+									</button>
+								)}
+							</div>
+							<ProductList products={products} />
 						</div>
 					</div>
-					<div className={`product-list-wrapper`}>
-						<div className="grid-row-span">
-							<h3 className="main-head text-left py-0-25">
-								Products
-							</h3>
-						</div>
-						<ProductList products={products} />
-					</div>
-				</>
-			)}
+				)}
+			</div>
 		</main>
 	);
 };

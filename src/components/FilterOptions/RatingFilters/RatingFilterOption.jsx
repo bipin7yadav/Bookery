@@ -1,36 +1,29 @@
 import React from "react";
-
 import { useFilter } from "contexts/";
 
 const RatingFilterOption = ({ ratingFilter, ratingValue }) => {
-	const {
-		filterState: { ratingsMoreThan },
-		filterDispatch,
-	} = useFilter();
+	const { filterState: { ratingsMoreThan }, filterDispatch } = useFilter();
 
-	const handleRatingChange = (event) => {
+	const handleChange = (e) => {
 		filterDispatch({
 			filterType: "FILTER_BY_RATINGS",
-			filterPayload: parseInt(event.target.value),
+			filterPayload: parseInt(e.target.value, 10),
 		});
 	};
 
 	return (
-		<li className="list-item m-0-5">
-			<label
-				htmlFor={ratingFilter}
-				className="text-sm rating-label flex-row flex-align-center"
-			>
+		<li>
+			<label className="flex cursor-pointer items-center gap-3 rounded-lg py-2 px-2 hover:bg-surface-50">
 				<input
 					type="radio"
-					className="input-radio"
 					value={ratingValue}
 					id={ratingFilter}
 					name="product-ratings"
-					onChange={handleRatingChange}
+					onChange={handleChange}
 					checked={ratingsMoreThan === ratingValue}
+					className="h-4 w-4 border-surface-300 text-surface-800 focus:ring-accent-500"
 				/>
-				<span className="genre-text">{ratingFilter}</span>
+				<span className="text-sm text-surface-700">{ratingFilter}</span>
 			</label>
 		</li>
 	);
