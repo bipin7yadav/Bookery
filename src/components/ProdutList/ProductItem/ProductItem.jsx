@@ -91,9 +91,8 @@ const ProductItem = ({ book }) => {
 	};
 
 	return (
-		<Link
-			to={`/products/${_id}`}
-			className={`group relative block min-w-0 overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card transition-all duration-200 hover:shadow-cardHover hover:border-surface-300 ${outOfStock ? "opacity-70" : ""} ${loading ? "pointer-events-none" : ""}`}
+		<article
+			className={`group relative flex flex-col min-w-0 overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card transition-all duration-200 hover:shadow-cardHover hover:border-surface-300 ${outOfStock ? "opacity-70" : ""} ${loading ? "pointer-events-none" : ""}`}
 		>
 			{badgeLabel && (
 				<div className="absolute left-3 top-3 z-10">
@@ -111,63 +110,66 @@ const ProductItem = ({ book }) => {
 			</button>
 
 			{outOfStock && (
-				<div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
+				<div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 pointer-events-none">
 					<span className="rounded-lg bg-surface-800 px-3 py-1.5 text-2xs font-medium text-white">
 						Out of Stock
 					</span>
 				</div>
 			)}
 
-			<div className="aspect-[3/4] overflow-hidden bg-surface-100">
-				<img
-					src={coverImg}
-					alt={title}
-					className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-				/>
-			</div>
-
-			<div className="p-4">
-				<div className="mb-1 flex items-center gap-1.5 text-2xs text-surface-500">
-					<span className="font-medium text-surface-700">{totalStars}</span>
-					<i className="fa-solid fa-star text-amber-500" />
-					<span>|</span>
-					<span>{localeTotalRatings} ratings</span>
+			<Link to={`/products/${_id}`} className="flex-1 flex flex-col">
+				<div className="aspect-[3/4] overflow-hidden bg-surface-100">
+					<img
+						src={coverImg}
+						alt={title}
+						className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+					/>
 				</div>
-				<h3 className="font-medium text-surface-900 line-clamp-2">{title}</h3>
-				<p className="mt-0.5 text-sm text-surface-500">{author}</p>
-				<div className="mt-3 flex items-center justify-between gap-2">
-					<div>
-						<p className="text-sm font-semibold text-surface-900">₹ {localeSellingPrice}</p>
-						<p className="text-2xs text-surface-400 line-through">₹ {localeOriginalPrice}</p>
+
+				<div className="p-4 flex-1">
+					<div className="mb-1 flex items-center gap-1.5 text-2xs text-surface-500">
+						<span className="font-medium text-surface-700">{totalStars}</span>
+						<i className="fa-solid fa-star text-amber-500" />
+						<span>|</span>
+						<span>{localeTotalRatings} ratings</span>
 					</div>
-					{discountPercent > 0 && (
-						<Badge variant="success">{discountPercent}% off</Badge>
+					<h3 className="font-medium text-surface-900 line-clamp-2">{title}</h3>
+					<p className="mt-0.5 text-sm text-surface-500">{author}</p>
+					<div className="mt-3 flex items-center justify-between gap-2">
+						<div>
+							<p className="text-sm font-semibold text-surface-900">₹ {localeSellingPrice}</p>
+							<p className="text-2xs text-surface-400 line-through">₹ {localeOriginalPrice}</p>
+						</div>
+						{discountPercent > 0 && (
+							<Badge variant="success">{discountPercent}% off</Badge>
+						)}
+					</div>
+					{genres?.length > 0 && (
+						<div className="mt-2 flex flex-wrap gap-1">
+							{genres.slice(0, 2).map((g) => (
+								<Badge key={g} variant="default" className="text-2xs">
+									{g}
+								</Badge>
+							))}
+						</div>
 					)}
 				</div>
-				{genres?.length > 0 && (
-					<div className="mt-2 flex flex-wrap gap-1">
-						{genres.slice(0, 2).map((g) => (
-							<Badge key={g} variant="default" className="text-2xs">
-								{g}
-							</Badge>
-						))}
-					</div>
-				)}
-			</div>
+			</Link>
 
-			<div className="border-t border-surface-100 p-4">
+			<div className="border-t border-surface-100 p-3 mt-auto">
 				<Button
 					variant="primary"
 					size="md"
 					fullWidth
 					disabled={loading || outOfStock}
 					onClick={handleAddToCart}
+					className="flex items-center justify-center gap-1 whitespace-nowrap px-2"
 				>
-					{bookInCart ? "Go to Cart" : "Add to Cart"}
-					<i className="fa-solid fa-cart-shopping ml-1 text-sm" />
+					<span className="truncate">{bookInCart ? "Go to Cart" : "Add to Cart"}</span>
+					<i className="fa-solid fa-cart-shopping text-sm shrink-0" />
 				</Button>
 			</div>
-		</Link>
+		</article>
 	);
 };
 

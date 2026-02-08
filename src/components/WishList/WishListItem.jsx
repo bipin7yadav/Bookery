@@ -58,12 +58,12 @@ const WishListItem = ({ wishListItem }) => {
 	};
 
 	return (
-		<article className="overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card transition-shadow hover:shadow-cardHover">
-			<Link to={`/products/${_id}`} className="block">
-				<div className="aspect-[3/4] overflow-hidden bg-surface-100">
+		<article className="col-span-full sm:col-span-1 min-w-0 overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card transition-shadow hover:shadow-cardHover">
+			<Link to={`/products/${_id}`} className="flex sm:block">
+				<div className="w-28 shrink-0 sm:w-full aspect-[3/4] overflow-hidden bg-surface-100">
 					<img src={coverImg} alt={title} className="h-full w-full object-cover" />
 				</div>
-				<div className="p-4">
+				<div className="p-4 flex-1">
 					<h3 className="font-medium text-surface-900 line-clamp-2">{title}</h3>
 					<p className="mt-0.5 text-sm text-surface-500">{author}</p>
 					<div className="mt-3 flex items-center gap-2">
@@ -83,9 +83,9 @@ const WishListItem = ({ wishListItem }) => {
 				>
 					<i className="fa-solid fa-heart text-sm" />
 				</button>
-				<Button variant="primary" size="md" className="flex-1" disabled={loading} onClick={(e) => { e.preventDefault(); handleMoveToCart(); }}>
-					Move to cart
-					<ShoppingCart className="ml-1" fontSize="small" />
+				<Button variant="primary" size="md" className="flex-1 flex items-center justify-center gap-1.5 px-2" disabled={loading} onClick={(e) => { e.preventDefault(); handleMoveToCart(); }}>
+					<span className="truncate min-w-0">Move to cart</span>
+					<ShoppingCart fontSize="small" className="shrink-0" />
 				</Button>
 			</div>
 		</article>
