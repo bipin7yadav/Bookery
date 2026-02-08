@@ -1,30 +1,19 @@
 import React from "react";
-import { v4 as uuid } from "uuid";
-
 import { BookTypeFilterOption } from "./BookTypeFilterOption";
 
-const BookTypeFilters = () => {
-	const bookTypeFiltersList = [
-		{ id: uuid(), bookTypeFilter: "Paperback" },
-		{ id: uuid(), bookTypeFilter: "Hardcover" },
-	];
+const bookTypes = ["Paperback", "Hardcover"];
 
-	const bookTypeFilterMapping = bookTypeFiltersList.map(
-		({ id, bookTypeFilter }) => (
-			<BookTypeFilterOption key={id} bookTypeFilter={bookTypeFilter} />
-		)
-	);
-
-	return (
-		<div className="filter-category">
-			<ul className="list-spaced list-style-none">
-				<h6 className="filter-head text-reg list-head px-0-5 py-0-25 mb-0-5">
-					Book Cover
-				</h6>
-				{bookTypeFilterMapping}
-			</ul>
-		</div>
-	);
-};
+const BookTypeFilters = () => (
+	<div>
+		<h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-surface-500">
+			Book Cover
+		</h4>
+		<ul className="space-y-1">
+			{bookTypes.map((type) => (
+				<BookTypeFilterOption key={type} bookTypeFilter={type} />
+			))}
+		</ul>
+	</div>
+);
 
 export { BookTypeFilters };

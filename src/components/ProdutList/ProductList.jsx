@@ -1,33 +1,29 @@
 import React from "react";
-
 import { compose } from "utils/";
 import { ProductItem } from "./ProductItem/ProductItem";
 
 const ProductList = ({ products }) => {
-	const sortedFilteredBooks = compose(products);
+	const sortedFilteredBooks = compose(products || []);
+
+	if (sortedFilteredBooks.length === 0) {
+		return (
+			<p className="py-12 text-center text-surface-600">
+				No books found. Try adjusting your filters.
+			</p>
+		);
+	}
 
 	return (
-		<section className="product-catalog">
-			<article className="products-container grid grid-autofit">
-				{sortedFilteredBooks.length > 0 ? (
-					<>
-						<p className="text-lg grid-row-span text-left">
-							Number of Books:{" "}
-							<span className="primary-color">
-								{sortedFilteredBooks.length}
-							</span>
-						</p>
-						{sortedFilteredBooks.map((book) => (
-							<ProductItem book={book} key={book._id} />
-						))}
-					</>
-				) : (
-					<h3 className="my-1 text-center error-color grid-row-span">
-						No Books Found!
-					</h3>
-				)}
-			</article>
-		</section>
+		<>
+			<p className="mb-6 text-sm text-surface-500">
+				{sortedFilteredBooks.length} book{sortedFilteredBooks.length !== 1 ? "s" : ""}
+			</p>
+			<div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
+				{sortedFilteredBooks.map((book) => (
+					<ProductItem book={book} key={book._id} />
+				))}
+			</div>
+		</>
 	);
 };
 

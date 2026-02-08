@@ -1,31 +1,33 @@
 import React from "react";
 import { Close } from "@mui/icons-material";
-
 import { useFilter } from "contexts/";
+import { Button } from "components/ui";
 
 const ClearFilters = ({ handleChangeShowFilterDrawer }) => {
 	const { filterDispatch } = useFilter();
 
-	const handleClearFilters = (event) => {
+	const handleClear = () => {
 		filterDispatch({ filterType: "CLEAR_FILTERS" });
 	};
 
 	return (
-		<div className="product-filters-head flex-row flex-align-end flex-justify-between mb-1-5 text-underline">
-			<h5 className="sidebar-head">Filters</h5>
-			<div className="flex-row flex-align-center flex-justify-center clear-filters-button-container">
-				<button
-					className="btn btn-clear-filters btn-link"
-					onClick={handleClearFilters}
-				>
-					Clear Filters
-				</button>
-				<button
-					className="btn btn-icon btn-close-filters"
+		<div className="flex items-center justify-between">
+			<h3 className="text-sm font-semibold uppercase tracking-wider text-surface-700">
+				Filters
+			</h3>
+			<div className="flex items-center gap-2">
+				<Button variant="ghost" size="sm" onClick={handleClear}>
+					Clear
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					className="lg:hidden"
 					onClick={() => handleChangeShowFilterDrawer(false)}
+					aria-label="Close filters"
 				>
-					<Close />
-				</button>
+					<Close fontSize="small" />
+				</Button>
 			</div>
 		</div>
 	);

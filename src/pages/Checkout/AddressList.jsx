@@ -1,83 +1,64 @@
 import React, { useEffect, useState } from "react";
-
 import { useAddress, useCart } from "contexts";
 import { AddressItem } from "pages";
+import { Button } from "components/ui";
 
 const AddressList = () => {
 	const { addresses, addressDispatch } = useAddress();
-	const {
-		cartDispatch,
-		cartState: { checkoutData },
-	} = useCart();
-	const [selectedAddress, setSelectedAddress] = useState(
-		checkoutData?.address ? { ...checkoutData.address } : -1
-	);
+	const { cartDispatch, cartState: { checkoutData } } = useCart();
+	const [selected, setSelected] = useState(checkoutData?.address ? { ...checkoutData.address } : null);
 
 	useEffect(() => {
 		if (!checkoutData?.address && addresses?.length) {
-			cartDispatch({
-				type: "SET_CHECKOUT_ADDRESS",
-				payload: { address: { ...addresses[0] } },
-			});
-
-			setSelectedAddress({ ...addresses[0] });
+			const first = { ...addresses[0] };
+			cartDispatch({ type: "SET_CHECKOUT_ADDRESS", payload: { address: first } });
+			setSelected(first);
 		}
 	}, [addresses?.length]);
 
-	const handleChangeSelectedAddress = (address) => {
-		setSelectedAddress({ ...address });
-		cartDispatch({
-			type: "SET_CHECKOUT_ADDRESS",
-			payload: { address },
-		});
+	const handleSelect = (address) => {
+		setSelected({ ...address });
+		cartDispatch({ type: "SET_CHECKOUT_ADDRESS", payload: { address } });
 	};
 
-	const handleChangeAddressModalVisibility = (event) => {
-		event.stopPropagation();
-
-		addressDispatch({
-			type: "SET_ADDRESS_MODAL_VISIBILITY",
-			payload: { modalVisibility: true, addressToEdit: null },
-		});
+	const handleAddNew = (e) => {
+		e.stopPropagation();
+		addressDispatch({ type: "SET_ADDRESS_MODAL_VISIBILITY", payload: { modalVisibility: true, addressToEdit: null } });
 	};
 
 	return (
-		<div className="checkout-address-list flex-col flex-align-start flex-justify-center">
+		<div className="rounded-2xl border border-surface-200 bg-white p-6 shadow-card">
+			<h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-surface-700">
+				Select shipping address
+			</h3>
 			{addresses?.length ? (
-				<>
-					<h4>Select shipping address</h4>
+				<ul className="space-y-3">
 					{addresses.map((address) => (
 						<label
-							className="flex-row flex-align-start flex-justify-center"
 							key={address._id}
+							className={`flex cursor-pointer gap-3 rounded-xl border-2 p-4 transition-colors ${
+								selected?._id === address._id
+									? "border-surface-800 bg-surface-50"
+									: "border-surface-200 hover:border-surface-300"
+							}`}
 						>
 							<input
 								type="radio"
-								className="mt-0-25"
-								value={address._id}
 								name="address"
-								onChange={(e) =>
-									handleChangeSelectedAddress(address)
-								}
-								checked={address._id === selectedAddress?._id}
+								checked={selected?._id === address._id}
+								onChange={() => handleSelect(address)}
+								className="mt-1 h-4 w-4 text-surface-800"
 							/>
-							<AddressItem
-								address={address}
-								key={address._id}
-								page={"checkout"}
-							/>
+							<AddressItem address={address} page="checkout" />
 						</label>
 					))}
-				</>
+				</ul>
 			) : (
-				<h4>No addresses to show!</h4>
+				<p className="text-sm text-surface-500">No addresses saved.</p>
 			)}
-			<button
-				className="btn btn-primary py-0-25 px-0-75 my-2"
-				onClick={handleChangeAddressModalVisibility}
-			>
-				Add New Address
-			</button>
+			<Button variant="secondary" size="md" className="mt-6" onClick={handleAddNew}>
+				Add new address
+			</Button>
 		</div>
 	);
 };

@@ -1,87 +1,54 @@
 import React, { useState } from "react";
-
 import { useAddress, useAuth } from "contexts";
 import { deleteAddress } from "services";
 import { useToast } from "custom-hooks";
-import ProfileCSS from "../Profile.module.css";
+import { Button } from "components/ui";
 
 const AddressItem = ({ address, page }) => {
-	const { addressCityState, addressItem, buttonsContainer } = ProfileCSS;
 	const { addressDispatch } = useAddress();
 	const { showToast } = useToast();
-	const {
-		authState: { token },
-	} = useAuth();
+	const { authState: { token } } = useAuth();
+	const [loading, setLoading] = useState(false);
 
-	const [isOngoingNetworkCall, setIsOngoingNetworkCall] = useState(false);
-
-	const handleAddressEdit = (event) => {
-		event.stopPropagation();
-
+	const handleEdit = (e) => {
+		e.stopPropagation();
 		addressDispatch({
 			type: "SET_ADDRESS_MODAL_VISIBILITY",
 			payload: { modalVisibility: true, addressToEdit: address._id },
 		});
 	};
 
-	const handleAddressDelete = async (event) => {
-		event.stopPropagation();
-
-		setIsOngoingNetworkCall(true);
-
+	const handleDelete = async (e) => {
+		e.stopPropagation();
+		setLoading(true);
 		try {
-			const {
-				data: { address: addresses },
-			} = await deleteAddress(token, address._id);
-
-			addressDispatch({
-				type: "SET_ADDRESSES",
-				payload: { addresses },
-			});
-
-			showToast("Address deleted successfully.", "success");
-		} catch (error) {
-			setIsOngoingNetworkCall(false);
-			showToast(
-				"Failed to delete address. Please try again later.",
-				"error"
-			);
+			const { data: { address: list } } = await deleteAddress(token, address._id);
+			addressDispatch({ type: "SET_ADDRESSES", payload: { addresses: list } });
+			showToast("Address deleted.", "success");
+		} catch {
+			showToast("Failed to delete address.", "error");
+			setLoading(false);
 		}
 	};
 
+	const isCheckoutOrOrder = page === "checkout" || page === "orderSummary";
+
 	return (
-		<div
-			className={`${addressItem} ${
-				page === "orderSummary" ? "py-0" : "py-2"
-			} flex-col flex-align-start flex-justify-center text-left`}
-		>
-			<span>{address.name}</span>
-			<span>{address.addressLine}</span>
-			<div
-				className={`${addressCityState} flex-row flex-justify-start flex-align-center`}
-			>
-				<span>{address.city},</span>
-				<span>{address.state},</span>
-				<span>{address.pincode}</span>
-			</div>
-			<span>{address.phoneNumber}</span>
-			{page === "checkout" || page === "orderSummary" ? null : (
-				<div
-					className={`${buttonsContainer} mt-1 flex-row flex-align-center flex-justify-start`}
-				>
-					<button
-						className="btn btn-primary p-0-25 text-reg"
-						onClick={handleAddressEdit}
-					>
+		<div className="rounded-xl border border-surface-200 p-4">
+			<p className="font-medium text-surface-900">{address.name}</p>
+			<p className="text-sm text-surface-600">{address.addressLine}</p>
+			<p className="text-sm text-surface-600">
+				{address.city}, {address.state} — {address.pincode}
+			</p>
+			<p className="text-sm text-surface-600">{address.phoneNumber}</p>
+			{!isCheckoutOrOrder && (
+				<div className="mt-4 flex gap-2">
+					<Button variant="secondary" size="sm" onClick={handleEdit}>
 						Edit
-					</button>
-					<button
-						className="btn btn-primary btn-outline p-0-25 text-reg"
-						onClick={handleAddressDelete}
-						disabled={isOngoingNetworkCall}
-					>
+					</Button>
+					<Button variant="ghost" size="sm" disabled={loading} onClick={handleDelete}>
 						Delete
-					</button>
+					</Button>
 				</div>
 			)}
 		</div>

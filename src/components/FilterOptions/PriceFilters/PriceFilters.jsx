@@ -1,43 +1,40 @@
 import React from "react";
-
 import { useFilter } from "contexts/";
 
 const PriceFilters = () => {
-	const {
-		filterState: { price },
-		filterDispatch,
-	} = useFilter();
+	const { filterState: { price }, filterDispatch } = useFilter();
 
-	const handlePriceChange = (event) => {
+	const handleChange = (e) => {
 		filterDispatch({
 			filterType: "FILTER_BY_PRICE",
-			filterPayload: parseInt(event.target.value),
+			filterPayload: parseInt(e.target.value, 10),
 		});
 	};
 
 	return (
-		<div className="filter-price mt-1 mb-2 filter">
-			<ul className="list list-stacked list-style-none mt-1 mb-1-5 filter-list">
-				<label htmlFor="product-price-slider">
-					<h6 className="filter-head text-reg list-head px-0-5 py-0-25 my-0-5">
-						Price - ₹ {price}
-					</h6>
-					<input
-						type="range"
-						className="input-range"
-						id="product-price-slider"
-						min="100"
-						max="1000"
-						step="50"
-						onChange={handlePriceChange}
-						value={price}
-					/>
+		<div>
+			<h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-surface-500">
+				Price
+			</h4>
+			<div className="space-y-2">
+				<label htmlFor="product-price-slider" className="block text-sm font-medium text-surface-700">
+					₹ {price}
 				</label>
-				<div className="slider-price-range flex-row flex-justify-between flex-align-center">
-					<span className="text-sm min-price">₹ 100</span>
-					<span className="text-sm min-price">₹ 1,000</span>
+				<input
+					type="range"
+					id="product-price-slider"
+					min="100"
+					max="1000"
+					step="50"
+					value={price ?? 1000}
+					onChange={handleChange}
+					className="h-2 w-full appearance-none rounded-full bg-surface-200 accent-surface-800"
+				/>
+				<div className="flex justify-between text-2xs text-surface-500">
+					<span>₹ 100</span>
+					<span>₹ 1,000</span>
 				</div>
-			</ul>
+			</div>
 		</div>
 	);
 };

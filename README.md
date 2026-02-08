@@ -1,5 +1,5 @@
 <h1 align="center">
-  Bookery 
+  Booknook 
 </h1>
 <h3 align="center">
   <a href="https://github.com/bipin7yadav/bookery-server">Backend Code Repository</a>
@@ -35,10 +35,10 @@
 <!-- Project Introduction -->
 ## **Introduction**
 <p>
-    Bookery is an e-commerce store that satisfies your bookish needs and moods. 
+    Booknook is an e-commerce store that satisfies your bookish needs and moods. 
 </p>
 <br />
-Visit <a href="https://bookery.netlify.app/">bookery</a> and check out popular and hot picks across multiple genres.
+Visit <a href="https://bookery.netlify.app/">Booknook</a> and check out popular and hot picks across multiple genres.
 <br />
 <br />
 <!-- FEATURES -->
