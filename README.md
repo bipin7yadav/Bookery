@@ -85,8 +85,7 @@ UI consists of -
 
 ## **Technology/ Languages Used**
 
-- CSS
-- <a href="https://elixir-ui.netlify.app/">Elixir UI - Component Library</a>
+- Tailwind CSS
 - ReactJS
 - React Router v6
 - Backend with Node.js, Express.js, and MongoDB
